@@ -1,20 +1,25 @@
 /**
- * app/api/ask/route.ts — RAG pipeline Route Handler
+ * app/api/ask/route.ts — Hybrid RAG pipeline Route Handler
  *
- * RAG = Retrieve, Augment, Generate. The three steps:
- *   1. RETRIEVE  — embed the question with Gemini, find the 8 most similar verses
- *   2. AUGMENT   — build a prompt that includes those 8 verses as grounded context
- *   3. GENERATE  — Claude reads only those verses and writes a citation-backed answer
+ * Day 5 upgrade: retrieval now spans TWO corpora in parallel:
+ *   • verses table  — 31,098 WEB Bible verses
+ *   • chunks table  — Matthew Henry's Commentary (1708), ~500-token chunks
  *
- * Why not just ask Claude directly without retrieval?
- * LLMs hallucinate references ("Isaiah 42:3 says…" — it doesn't). By forcing Claude
- * to work only from verses we supply, every citation is verifiable. If the retrieved
- * verses don't cover the question, Claude says so rather than inventing an answer.
+ * RAG steps:
+ *   1. RETRIEVE  — embed the question once, search both tables simultaneously
+ *   2. AUGMENT   — build a prompt with labeled Scripture + Commentary sections
+ *   3. GENERATE  — Claude answers using only what was retrieved; no hallucination
+ *
+ * WHY HYBRID RETRIEVAL:
+ *   A verse alone ("Be anxious for nothing") tells you WHAT Scripture says.
+ *   Commentary ("Henry explains that Paul's command implies prayer as the cure
+ *   for worry") tells you WHY and HOW. The combination gives Claude richer
+ *   grounding to write pastoral, useful answers.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { searchVerses } from '@/lib/search'
+import { hybridSearch } from '@/lib/search'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -22,16 +27,23 @@ export interface AskResponse {
   answer: string
   citations: Citation[]
   retrievedVerses: RetrievedVerse[]
+  retrievedChunks: RetrievedChunk[]
 }
 
 export interface Citation {
-  ref: string     // e.g. "Philippians 4:6"
+  ref: string
   text: string
   relevance: string
 }
 
 export interface RetrievedVerse {
   ref: string
+  text: string
+  similarity: number
+}
+
+export interface RetrievedChunk {
+  ref: string       // e.g. "Matthew Henry on Romans 8"
   text: string
   similarity: number
 }
@@ -46,43 +58,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid JSON' }, { status: 400 })
   }
 
-  // ── Step 1: RETRIEVE ────────────────────────────────────────────────────────
-  // Embed the question using the same model that embedded the verses.
-  // Using a different model would break the search — vectors from different models
-  // live in different spaces and can't be meaningfully compared.
-  let verses
+  // ── Step 1: RETRIEVE (hybrid — one embed, two searches in parallel) ──────────
+  let verses: Awaited<ReturnType<typeof hybridSearch>>['verses']
+  let chunks: Awaited<ReturnType<typeof hybridSearch>>['chunks']
   try {
-    verses = await searchVerses(question, 8)
+    const result = await hybridSearch(question, 5, 3)
+    verses = result.verses
+    chunks = result.chunks
   } catch (err) {
-    console.error('Search failed:', err)
+    console.error('Hybrid search failed:', err)
     return NextResponse.json({ error: 'search failed' }, { status: 500 })
   }
 
-  if (verses.length === 0) {
-    return NextResponse.json({ error: 'no verses found — embeddings may still be loading' }, { status: 503 })
+  if (verses.length === 0 && chunks.length === 0) {
+    return NextResponse.json({ error: 'no content found — embeddings may still be loading' }, { status: 503 })
   }
 
-  // ── Step 2: AUGMENT ─────────────────────────────────────────────────────────
-  // Format the retrieved verses as numbered context for Claude.
-  const context = verses
+  // ── Step 2: AUGMENT ──────────────────────────────────────────────────────────
+  // Label context clearly so Claude knows which source type each item came from.
+  const scriptureContext = verses
     .map((v, i) => `[${i + 1}] ${v.book} ${v.chapter}:${v.verse} — "${v.text}"`)
     .join('\n')
 
-  const systemPrompt = `You are a Bible study assistant. Answer questions about Scripture using ONLY the verses provided below. Do not use any Bible knowledge outside of what is given.
+  const commentaryContext = chunks
+    .map((c, i) => {
+      const label = i + verses.length + 1
+      return `[${label}] Matthew Henry on ${c.book} ${c.chapter} — "${c.text}"`
+    })
+    .join('\n\n')
+
+  const hasCommentary = chunks.length > 0
+
+  const systemPrompt = `You are a Bible study assistant. Answer questions using ONLY the Scripture verses and commentary excerpts provided below. Do not use any Bible knowledge or theological knowledge outside what is given.
 
 Rules:
-1. Only cite verses from the provided list. Never invent or recall a verse not in the list.
-2. If the provided verses do not adequately address the question, say so honestly.
-3. Every claim you make must be tied to a specific verse from the list.
+1. Only cite verses and commentary from the provided lists. Never invent references.
+2. If the provided material does not adequately address the question, say so honestly.
+3. Every claim must be tied to a specific item from the lists.
 4. Be warm, pastoral, and clear — you are helping someone study Scripture.
+5. When commentary is available, use it to explain context or application — but Scripture takes priority.
 
-Retrieved verses:
-${context}`
+SCRIPTURE VERSES:
+${scriptureContext}
+${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` : ''}`
 
-  // ── Step 3: GENERATE ────────────────────────────────────────────────────────
-  // We use Anthropic tool_use to force structured output.
-  // Tool use is more reliable than "respond in JSON" prompting because the API
-  // validates the structure before returning — Claude can never produce malformed JSON.
+  // ── Step 3: GENERATE ─────────────────────────────────────────────────────────
   let parsed: { answer: string; citations: Citation[] }
   try {
     const message = await anthropic.messages.create({
@@ -93,22 +113,22 @@ ${context}`
       tools: [
         {
           name: 'scripture_answer',
-          description: 'Return a grounded Bible study answer with citations.',
+          description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
           input_schema: {
             type: 'object' as const,
             properties: {
               answer: {
                 type: 'string',
-                description: '2-4 sentence answer grounded only in the provided verses.',
+                description: '2-4 sentence answer grounded only in the provided verses and commentary.',
               },
               citations: {
                 type: 'array',
                 items: {
                   type: 'object',
                   properties: {
-                    ref:       { type: 'string', description: 'e.g. Philippians 4:6' },
-                    text:      { type: 'string', description: 'Exact verse text from the provided list.' },
-                    relevance: { type: 'string', description: 'One sentence on why this verse applies.' },
+                    ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
+                    text:      { type: 'string', description: 'Exact text from the provided list.' },
+                    relevance: { type: 'string', description: 'One sentence on why this source applies.' },
                   },
                   required: ['ref', 'text', 'relevance'],
                 },
@@ -121,7 +141,7 @@ ${context}`
       tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
     })
 
-    const toolBlock = message.content.find((b) => b.type === 'tool_use') as
+    const toolBlock = message.content.find(b => b.type === 'tool_use') as
       | { type: 'tool_use'; input: { answer: string; citations: Citation[] } }
       | undefined
     if (!toolBlock) throw new Error('no tool_use block in response')
@@ -132,12 +152,17 @@ ${context}`
   }
 
   const response: AskResponse = {
-    answer: parsed.answer ?? '',
+    answer:    parsed.answer ?? '',
     citations: parsed.citations ?? [],
-    retrievedVerses: verses.map((v) => ({
-      ref: `${v.book} ${v.chapter}:${v.verse}`,
-      text: v.text,
+    retrievedVerses: verses.map(v => ({
+      ref:        `${v.book} ${v.chapter}:${v.verse}`,
+      text:       v.text,
       similarity: v.similarity,
+    })),
+    retrievedChunks: chunks.map(c => ({
+      ref:        `Matthew Henry on ${c.book} ${c.chapter}`,
+      text:       c.text,
+      similarity: c.similarity,
     })),
   }
 

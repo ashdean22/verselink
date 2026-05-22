@@ -10,6 +10,11 @@ const EXAMPLE_QUESTIONS = [
   "How does Scripture describe forgiveness?",
 ]
 
+function isVerseCitation(ref: string) {
+  // Commentary citations start with "Matthew Henry on…"
+  return !ref.startsWith('Matthew Henry')
+}
+
 export default function AskBox() {
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState<AskResponse | null>(null)
@@ -43,6 +48,8 @@ export default function AskBox() {
       setLoading(false)
     }
   }
+
+  const totalContext = (result?.retrievedVerses.length ?? 0) + (result?.retrievedChunks?.length ?? 0)
 
   return (
     <div className="space-y-6">
@@ -118,18 +125,29 @@ export default function AskBox() {
               <p className="text-xs font-medium text-stone-400 uppercase tracking-wide">Citations</p>
               <div className="space-y-2">
                 {result.citations.map((c, i) => {
-                  const [book, chv] = c.ref.split(/(?<=\D)\s(?=\d)/)
+                  const verse = isVerseCitation(c.ref)
+                  const [book, chv] = verse ? c.ref.split(/(?<=\D)\s(?=\d)/) : [null, null]
                   const chapter = chv?.split(':')[0]
                   const slug = book?.toLowerCase().replace(/ /g, '-')
+
                   return (
                     <div key={i} className="rounded-lg border border-stone-200 bg-white p-4 space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <a
-                          href={`/bible/${slug}/${chapter}`}
-                          className="text-sm font-semibold text-stone-700 hover:underline shrink-0"
-                        >
-                          {c.ref}
-                        </a>
+                      <div className="flex items-center gap-2">
+                        {verse && slug && chapter ? (
+                          <a
+                            href={`/bible/${slug}/${chapter}`}
+                            className="text-sm font-semibold text-stone-700 hover:underline"
+                          >
+                            {c.ref}
+                          </a>
+                        ) : (
+                          <span className="text-sm font-semibold text-indigo-700">{c.ref}</span>
+                        )}
+                        {!verse && (
+                          <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">
+                            commentary
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-stone-700 italic">"{c.text}"</p>
                       <p className="text-xs text-stone-500">{c.relevance}</p>
@@ -140,25 +158,48 @@ export default function AskBox() {
             </div>
           )}
 
-          {/* Debug toggle — shows the raw retrieved verses + similarity scores */}
+          {/* Debug toggle */}
           <div className="border-t border-stone-100 pt-4">
             <button
               onClick={() => setShowContext(!showContext)}
               className="text-xs text-stone-400 hover:text-stone-600"
             >
-              {showContext ? '▲ Hide' : '▼ Show'} retrieved context ({result.retrievedVerses.length} verses)
+              {showContext ? '▲ Hide' : '▼ Show'} retrieved context ({totalContext} items)
             </button>
             {showContext && (
-              <ol className="mt-3 space-y-2">
-                {result.retrievedVerses.map((v, i) => (
-                  <li key={i} className="flex gap-3 text-xs text-stone-500">
-                    <span className="shrink-0 font-mono w-8">{(v.similarity * 100).toFixed(0)}%</span>
-                    <span>
-                      <span className="font-semibold text-stone-700">{v.ref}</span> — {v.text}
-                    </span>
-                  </li>
-                ))}
-              </ol>
+              <div className="mt-3 space-y-4">
+                {result.retrievedVerses.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-stone-400 mb-2">Scripture</p>
+                    <ol className="space-y-2">
+                      {result.retrievedVerses.map((v, i) => (
+                        <li key={i} className="flex gap-3 text-xs text-stone-500">
+                          <span className="shrink-0 font-mono w-8">{(v.similarity * 100).toFixed(0)}%</span>
+                          <span>
+                            <span className="font-semibold text-stone-700">{v.ref}</span> — {v.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {(result.retrievedChunks?.length ?? 0) > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-stone-400 mb-2">Commentary (Matthew Henry)</p>
+                    <ol className="space-y-3">
+                      {result.retrievedChunks.map((c, i) => (
+                        <li key={i} className="flex gap-3 text-xs text-stone-500">
+                          <span className="shrink-0 font-mono w-8">{(c.similarity * 100).toFixed(0)}%</span>
+                          <span>
+                            <span className="font-semibold text-indigo-700">{c.ref}</span>
+                            <span className="block mt-0.5 text-stone-400 line-clamp-3">{c.text}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -15,3 +15,14 @@ export interface SearchResult {
   text: string
   similarity: number
 }
+
+export interface ChunkResult {
+  id: number
+  source_type: string
+  doc_title: string
+  book: string
+  chapter: number
+  chunk_index: number
+  text: string
+  similarity: number
+}
