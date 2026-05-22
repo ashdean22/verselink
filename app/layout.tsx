@@ -31,8 +31,11 @@ export default function RootLayout({
           <a href="/search" className="text-sm text-stone-500 hover:text-stone-800">
             Search
           </a>
+          <a href="/evals" className="text-sm text-stone-500 hover:text-stone-800">
+            Evals
+          </a>
         </nav>
-        <main className="mx-auto max-w-3xl px-6 py-10">{children}</main>
+        <div className="px-6 py-10">{children}</div>
       </body>
     </html>
   );

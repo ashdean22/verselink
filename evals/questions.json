@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "question": "What does Scripture say about anxiety and worry?",
+    "expected": ["Philippians 4:6", "Matthew 6:34", "1 Peter 5:7"],
+    "topic": "anxiety"
+  },
+  {
+    "id": 2,
+    "question": "How should I handle grief and loss?",
+    "expected": ["John 11:35", "Psalms 34:18", "Matthew 5:4"],
+    "topic": "grief"
+  },
+  {
+    "id": 3,
+    "question": "What does the Bible say about forgiving others?",
+    "expected": ["Matthew 18:22", "Ephesians 4:32", "Colossians 3:13"],
+    "topic": "forgiveness"
+  },
+  {
+    "id": 4,
+    "question": "How do I find strength when I am weak and exhausted?",
+    "expected": ["Philippians 4:13", "Isaiah 40:31", "2 Corinthians 12:10"],
+    "topic": "strength"
+  },
+  {
+    "id": 5,
+    "question": "What does Scripture teach about faith?",
+    "expected": ["Hebrews 11:1", "Romans 10:17", "Matthew 17:20"],
+    "topic": "faith"
+  },
+  {
+    "id": 6,
+    "question": "How should a Christian pray?",
+    "expected": ["Matthew 6:9", "1 Thessalonians 5:17", "Philippians 4:6"],
+    "topic": "prayer"
+  },
+  {
+    "id": 7,
+    "question": "What does the Bible say about love?",
+    "expected": ["1 Corinthians 13:4", "John 3:16", "1 John 4:8"],
+    "topic": "love"
+  },
+  {
+    "id": 8,
+    "question": "How do I resist temptation?",
+    "expected": ["1 Corinthians 10:13", "James 1:14", "Matthew 26:41"],
+    "topic": "temptation"
+  },
+  {
+    "id": 9,
+    "question": "What does Scripture say about hope?",
+    "expected": ["Romans 8:24", "Lamentations 3:22", "Romans 15:13"],
+    "topic": "hope"
+  },
+  {
+    "id": 10,
+    "question": "What does the Bible say about money and the love of wealth?",
+    "expected": ["1 Timothy 6:10", "Matthew 6:24", "Luke 12:15"],
+    "topic": "money"
+  },
+  {
+    "id": 11,
+    "question": "What does Scripture say about pride and humility?",
+    "expected": ["Proverbs 16:18", "James 4:6", "Philippians 2:3"],
+    "topic": "humility"
+  },
+  {
+    "id": 12,
+    "question": "How can I know and follow God's will for my life?",
+    "expected": ["Proverbs 3:5", "Romans 12:2", "James 1:5"],
+    "topic": "guidance"
+  },
+  {
+    "id": 13,
+    "question": "What does Scripture say about suffering and trials?",
+    "expected": ["James 1:2", "Romans 5:3", "Romans 8:28"],
+    "topic": "suffering"
+  },
+  {
+    "id": 14,
+    "question": "How should I treat my enemies?",
+    "expected": ["Matthew 5:44", "Romans 12:20", "Luke 6:28"],
+    "topic": "enemies"
+  },
+  {
+    "id": 15,
+    "question": "What does the Bible say about peace?",
+    "expected": ["John 14:27", "Philippians 4:7", "Colossians 3:15"],
+    "topic": "peace"
+  },
+  {
+    "id": 16,
+    "question": "How do I gain wisdom?",
+    "expected": ["James 1:5", "Proverbs 9:10", "Proverbs 3:7"],
+    "topic": "wisdom"
+  },
+  {
+    "id": 17,
+    "question": "What does Scripture say about caring for the poor?",
+    "expected": ["Proverbs 19:17", "Matthew 25:40", "Luke 4:18"],
+    "topic": "poor"
+  },
+  {
+    "id": 18,
+    "question": "What does the Bible say about waiting and patience?",
+    "expected": ["Psalms 27:14", "Isaiah 40:31", "Romans 8:25"],
+    "topic": "waiting"
+  },
+  {
+    "id": 19,
+    "question": "How do I deal with doubt and unbelief?",
+    "expected": ["Mark 9:24", "James 1:6", "John 20:27"],
+    "topic": "doubt"
+  },
+  {
+    "id": 20,
+    "question": "What does Scripture say about anger?",
+    "expected": ["Ephesians 4:26", "James 1:19", "Proverbs 15:1"],
+    "topic": "anger"
+  },
+  {
+    "id": 21,
+    "question": "What does the Bible say about death and eternal life?",
+    "expected": ["John 11:25", "John 3:16", "Revelation 21:4"],
+    "topic": "eternal-life"
+  },
+  {
+    "id": 22,
+    "question": "What does Scripture say about generosity and giving?",
+    "expected": ["2 Corinthians 9:7", "Luke 6:38", "Proverbs 11:24"],
+    "topic": "generosity"
+  },
+  {
+    "id": 23,
+    "question": "How do I resolve conflict with other people?",
+    "expected": ["Matthew 18:15", "Romans 12:18", "Ephesians 4:3"],
+    "topic": "conflict"
+  },
+  {
+    "id": 24,
+    "question": "What does the Bible say about trusting God?",
+    "expected": ["Proverbs 3:5", "Psalms 37:3", "Jeremiah 17:7"],
+    "topic": "trust"
+  },
+  {
+    "id": 25,
+    "question": "How does Scripture describe God's love for us?",
+    "expected": ["John 3:16", "Romans 5:8", "1 John 4:9"],
+    "topic": "god-love"
+  },
+  {
+    "id": 26,
+    "question": "What does the Bible say about confession and repentance from sin?",
+    "expected": ["1 John 1:9", "Psalms 51:10", "Acts 3:19"],
+    "topic": "repentance"
+  },
+  {
+    "id": 27,
+    "question": "What does Scripture say about fear?",
+    "expected": ["Isaiah 41:10", "Psalms 23:4", "2 Timothy 1:7"],
+    "topic": "fear"
+  },
+  {
+    "id": 28,
+    "question": "What does the Bible say about joy?",
+    "expected": ["Nehemiah 8:10", "Psalms 16:11", "John 15:11"],
+    "topic": "joy"
+  },
+  {
+    "id": 29,
+    "question": "What does Scripture say about marriage?",
+    "expected": ["Genesis 2:24", "Ephesians 5:25", "Mark 10:9"],
+    "topic": "marriage"
+  },
+  {
+    "id": 30,
+    "question": "How does God comfort those who are hurting?",
+    "expected": ["2 Corinthians 1:3", "Psalms 34:18", "Matthew 11:28"],
+    "topic": "comfort"
+  }
+]

@@ -70,7 +70,7 @@ export default async function BibleChapterPage({ params }: PageProps) {
   const nextHref = `/bible/${bookSlug}/${chapterNum + 1}`
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="space-y-1">
         <p className="text-sm text-stone-400 uppercase tracking-wide">World English Bible</p>
         <h1 className="text-3xl font-bold">

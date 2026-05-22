@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
       <div className="space-y-3">
         <h1 className="text-4xl font-bold tracking-tight">VerseLink</h1>
         <p className="text-lg text-stone-600">
