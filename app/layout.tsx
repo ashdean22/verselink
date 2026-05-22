@@ -22,6 +22,9 @@ export default function RootLayout({
           <a href="/" className="text-lg font-semibold tracking-tight text-stone-800">
             VerseLink
           </a>
+          <a href="/ask" className="text-sm text-stone-500 hover:text-stone-800">
+            Ask
+          </a>
           <a href="/bible/john/1" className="text-sm text-stone-500 hover:text-stone-800">
             Browse Bible
           </a>

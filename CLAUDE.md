@@ -62,7 +62,7 @@ Don't suggest alternatives unless I ask:
 - **Database / Vector store:** Supabase Postgres + pgvector extension
 - **Embeddings:** Google Gemini `text-embedding-004` (768 dimensions)
 - **Embedding SDK:** `@google/generative-ai` npm package
-- **LLM:** Anthropic Claude API, model `claude-sonnet-4-20250514`
+- **LLM:** Anthropic Claude API, model `claude-sonnet-4-6`
 - **Voice:** Vapi
 - **Scheduled jobs / webhooks:** Vercel Cron Jobs + Next.js Route Handlers (no n8n)
 - **Bible text:** **World English Bible (WEB)** — public domain only
