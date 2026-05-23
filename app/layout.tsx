@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "VerseLink — AI Bible Study Companion",
   description:
     "Ask what Scripture says about anything. Get semantically relevant verses, not keyword matches.",
+  verification: {
+    google: "6JGECuWsdfThE86hJoBqlRIrSpSzmoUx5PoAoi6uYr0",
+  },
 };
 
 export default function RootLayout({
