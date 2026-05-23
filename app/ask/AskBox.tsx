@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AskResponse } from '@/app/api/ask/route'
 
 const EXAMPLE_QUESTIONS = [
@@ -18,6 +18,12 @@ function isVerseCitation(ref: string) {
 export default function AskBox() {
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState<AskResponse | null>(null)
+
+  // Pre-fill from ?q= param (used by topic page CTAs)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q')
+    if (q) setQuestion(q)
+  }, [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showContext, setShowContext] = useState(false)

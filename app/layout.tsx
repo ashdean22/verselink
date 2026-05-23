@@ -28,6 +28,9 @@ export default function RootLayout({
           <a href="/bible/john/1" className="text-sm text-stone-500 hover:text-stone-800">
             Browse Bible
           </a>
+          <a href="/topics" className="text-sm text-stone-500 hover:text-stone-800">
+            Topics
+          </a>
           <a href="/search" className="text-sm text-stone-500 hover:text-stone-800">
             Search
           </a>
