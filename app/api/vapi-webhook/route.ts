@@ -19,7 +19,8 @@ import { hybridSearch } from '@/lib/search'
 import { createClient } from '@supabase/supabase-js'
 import type { SearchResult, ChunkResult } from '@/types'
 
-const WEBHOOK_SECRET = process.env.VAPI_WEBHOOK_SECRET
+// TODO: Webhook signature verification deferred. Add as Phase 2 hardening —
+// see VAPI_WEBHOOK_SECRET in .env. Check x-vapi-secret header against the stored value.
 
 function formatSearchResult(verses: SearchResult[], chunks: ChunkResult[]): string {
   // Return concise plain text — this is read aloud over the phone.
@@ -49,14 +50,6 @@ function formatSearchResult(verses: SearchResult[], chunks: ChunkResult[]): stri
 }
 
 export async function POST(req: NextRequest) {
-  // Verify Vapi secret if configured
-  if (WEBHOOK_SECRET) {
-    const incoming = req.headers.get('x-vapi-secret')
-    if (incoming !== WEBHOOK_SECRET) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-    }
-  }
-
   let body: Record<string, unknown>
   try {
     body = await req.json()
