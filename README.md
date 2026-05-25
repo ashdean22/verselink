@@ -10,7 +10,7 @@ Ask what Scripture says about anything. Get semantically relevant verses and Mat
 
 - **Semantic search** across 31,098 WEB Bible verses via Gemini embeddings + pgvector
 - **Hybrid RAG** — retrieves top verses and Matthew Henry's Commentary (16,671 chunks) simultaneously, feeds both to Claude for grounded, citation-backed answers
-- **Voice devotionals** — "Call Me Now" triggers a Vapi outbound call with a `searchScripture` tool; daily 6am cron via Vercel
+- **Voice devotionals** — "Call Me Now" triggers a Vapi outbound call with a `searchScripture` tool; daily 6am cron via Vercel. Calls a phone number you enter — your number is never stored server-side.
 - **50 AEO topic pages** (`/topics/anxiety`, `/topics/grief`, …) with FAQPage JSON-LD, ISR cached for 24h
 - **Eval dashboard** (`/evals`) — Recall@5, Recall@10, MRR across retrieval experiments
 
