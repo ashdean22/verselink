@@ -14,24 +14,24 @@ export default function Home() {
       <div className="grid gap-4 sm:grid-cols-2">
         <a
           href="/ask"
-          className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm hover:border-stone-400 transition-colors"
+          className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm hover:border-stone-400 transition-colors"
         >
-          <h2 className="font-semibold mb-1">Ask Scripture</h2>
-          <p className="text-sm text-stone-500">Get grounded answers with verse citations.</p>
+          <h2 className="text-lg font-bold mb-1">Ask Scripture</h2>
+          <p className="text-sm text-stone-500">Ask any question. Get grounded answers with verse citations and Matthew Henry's commentary.</p>
         </a>
         <a
-          href="/bible/john/1"
-          className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm hover:border-stone-400 transition-colors"
+          href="/bible"
+          className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm hover:border-stone-400 transition-colors"
         >
-          <h2 className="font-semibold mb-1">Browse Bible</h2>
-          <p className="text-sm text-stone-500">Read any chapter of the World English Bible.</p>
+          <h2 className="text-lg font-bold mb-1">Browse Bible</h2>
+          <p className="text-sm text-stone-500">Read any of the 66 books of the World English Bible, chapter by chapter.</p>
         </a>
         <a
-          href="/search"
-          className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm hover:border-stone-400 transition-colors"
+          href="/topics"
+          className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm hover:border-stone-400 transition-colors"
         >
-          <h2 className="font-semibold mb-1">Semantic Search</h2>
-          <p className="text-sm text-stone-500">Find verses by meaning, not just keywords.</p>
+          <h2 className="text-lg font-bold mb-1">Topics</h2>
+          <p className="text-sm text-stone-500">Anxiety, grief, forgiveness, hope — 50 topics with curated Scripture and commentary.</p>
         </a>
         <CallNowButton />
       </div>

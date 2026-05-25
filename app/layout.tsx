@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${geist.className} min-h-full bg-stone-50 text-stone-900 antialiased`}>
+      <body className={`${geist.className} min-h-full bg-stone-50 text-stone-900 antialiased flex flex-col`}>
         <nav className="border-b border-stone-200 bg-white px-6 py-3 flex items-center gap-6">
           <a href="/" className="text-lg font-semibold tracking-tight text-stone-800">
             VerseLink
@@ -28,20 +28,19 @@ export default function RootLayout({
           <a href="/ask" className="text-sm text-stone-500 hover:text-stone-800">
             Ask
           </a>
-          <a href="/bible/john/1" className="text-sm text-stone-500 hover:text-stone-800">
+          <a href="/bible" className="text-sm text-stone-500 hover:text-stone-800">
             Browse Bible
           </a>
           <a href="/topics" className="text-sm text-stone-500 hover:text-stone-800">
             Topics
           </a>
-          <a href="/search" className="text-sm text-stone-500 hover:text-stone-800">
-            Search
-          </a>
-          <a href="/evals" className="text-sm text-stone-500 hover:text-stone-800">
-            Evals
-          </a>
         </nav>
-        <div className="px-6 py-10">{children}</div>
+        <div className="flex-1 px-6 py-10">{children}</div>
+        <footer className="border-t border-stone-100 px-6 py-4 flex items-center gap-6">
+          <span className="text-xs text-stone-400">VerseLink</span>
+          <a href="/evals" className="text-xs text-stone-400 hover:text-stone-600">Engineering Notes</a>
+          <a href="/search" className="text-xs text-stone-400 hover:text-stone-600">Verse Search (debug)</a>
+        </footer>
       </body>
     </html>
   );

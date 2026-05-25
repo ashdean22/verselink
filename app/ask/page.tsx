@@ -8,6 +8,9 @@ export default function AskPage() {
         <p className="text-sm text-stone-500">
           Ask any question. Answers are grounded only in retrieved verses — no hallucinated references.
         </p>
+        <p className="text-xs text-stone-400">
+          Powered by semantic search over 31,000 verses + Matthew Henry&apos;s Commentary.
+        </p>
       </div>
       <AskBox />
     </div>
