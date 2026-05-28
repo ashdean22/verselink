@@ -1,0 +1,42 @@
+# VerseLink fine-tuning dependencies — Gemma 3 27B + QLoRA via Unsloth
+#
+# INSTALL ORDER MATTERS — see setup.sh, which handles this automatically:
+#   1. torch (CUDA-specific wheel URL, detected from nvidia-smi)
+#   2. unsloth (detects installed torch version at install time)
+#   3. pip install -r requirements.txt  (installs everything else, skips torch)
+#
+# Versions chosen for mutual compatibility as of 2025-05. If a package has
+# since released a patch, upgrading the patch version is generally safe.
+
+# ── PyTorch ───────────────────────────────────────────────────────────────────
+# setup.sh installs this with the right +cu1xx suffix via PyTorch's index URL.
+# The bare version here documents the target; pip --upgrade will skip it if the
+# CUDA-suffixed wheel is already installed.
+torch==2.4.1
+torchvision==0.19.1
+
+# ── Unsloth ───────────────────────────────────────────────────────────────────
+# Gemma 3 support confirmed in >= 2025.3.0.
+# If this exact version is unavailable: pip install unsloth
+unsloth==2025.5.1
+
+# ── Hugging Face ecosystem ────────────────────────────────────────────────────
+transformers==4.46.3
+datasets==3.1.0
+trl==0.12.1
+peft==0.13.2
+accelerate==0.34.2
+huggingface-hub==0.25.2
+
+# ── Quantization ──────────────────────────────────────────────────────────────
+bitsandbytes==0.44.1
+
+# ── Tokenizer / serialization ─────────────────────────────────────────────────
+sentencepiece==0.2.0
+protobuf==5.28.3
+safetensors==0.4.5
+
+# ── Support ───────────────────────────────────────────────────────────────────
+packaging>=23.1
+# Pin numpy below 2.0 — some bitsandbytes/transformers builds break on 2.x
+numpy>=1.26.0,<2.0

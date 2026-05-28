@@ -28,6 +28,8 @@ export interface AskResponse {
   citations: Citation[]
   retrievedVerses: RetrievedVerse[]
   retrievedChunks: RetrievedChunk[]
+  inputTokens?: number
+  outputTokens?: number
 }
 
 export interface Citation {
@@ -50,9 +52,16 @@ export interface RetrievedChunk {
 
 export async function POST(req: NextRequest) {
   let question: string
+  let includeUsage = false
+  // generationModel: defaults to Claude; pass an OpenRouter model ID (e.g.
+  // "meta-llama/llama-3.3-70b-instruct") to swap only the generate step —
+  // retrieval, prompt, and schema stay identical (apples-to-apples bake-off).
+  let generationModel = 'claude-sonnet-4-6'
   try {
     const body = await req.json()
     question = body.question?.trim()
+    includeUsage = body.includeUsage === true
+    if (body.model) generationModel = body.model
     if (!question) return NextResponse.json({ error: 'question is required' }, { status: 400 })
   } catch {
     return NextResponse.json({ error: 'invalid JSON' }, { status: 400 })
@@ -103,24 +112,86 @@ ${scriptureContext}
 ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` : ''}`
 
   // ── Step 3: GENERATE ─────────────────────────────────────────────────────────
+  // Provider dispatch based on model prefix:
+  //   claude-*      → Anthropic SDK
+  //   deepinfra:*   → DeepInfra serverless (strip prefix, use DEEPINFRA_API_KEY)
+  //   groq:*        → Groq (strip prefix, use GROQ_API_KEY)
+  //   anything else → OpenRouter (pass model ID as-is, use OPENROUTER_API_KEY)
+  // All non-Claude paths share the same OpenAI-compatible fetch helper below.
   let parsed: { answer: string; citations: Citation[] }
+  let inputTokens = 0
+  let outputTokens = 0
+
+  // Shared tool schema in OpenAI format — identical for every non-Claude provider.
+  const openAITools = [{
+    type: 'function' as const,
+    function: {
+      name: 'scripture_answer',
+      description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
+      parameters: {
+        type: 'object',
+        properties: {
+          answer:    { type: 'string', description: '2-4 sentence answer grounded only in the provided verses and commentary.' },
+          citations: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
+                text:      { type: 'string', description: 'Exact text from the provided list.' },
+                relevance: { type: 'string', description: 'One sentence on why this source applies.' },
+              },
+              required: ['ref', 'text', 'relevance'],
+            },
+          },
+        },
+        required: ['answer', 'citations'],
+      },
+    },
+  }]
+
+  async function callOpenAICompatible(
+    endpoint: string,
+    apiKey: string,
+    modelId: string,
+    extraHeaders: Record<string, string> = {}
+  ) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, ...extraHeaders },
+      body: JSON.stringify({
+        model:      modelId,
+        max_tokens: 1024,
+        messages:   [{ role: 'system', content: systemPrompt }, { role: 'user', content: question }],
+        tools:      openAITools,
+        tool_choice: { type: 'function', function: { name: 'scripture_answer' } },
+      }),
+    })
+    if (!res.ok) throw new Error(`${endpoint} ${res.status}: ${await res.text()}`)
+    const data = await res.json()
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0]
+    if (!toolCall) throw new Error(`no tool_call in response from ${endpoint}`)
+    return {
+      parsed:       JSON.parse(toolCall.function.arguments) as { answer: string; citations: Citation[] },
+      inputTokens:  data.usage?.prompt_tokens     ?? 0,
+      outputTokens: data.usage?.completion_tokens ?? 0,
+    }
+  }
+
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: question }],
-      tools: [
-        {
+    if (generationModel.startsWith('claude-')) {
+      const message = await anthropic.messages.create({
+        model: generationModel,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: question }],
+        tools: [{
           name: 'scripture_answer',
           description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
           input_schema: {
             type: 'object' as const,
             properties: {
-              answer: {
-                type: 'string',
-                description: '2-4 sentence answer grounded only in the provided verses and commentary.',
-              },
+              answer:    { type: 'string', description: '2-4 sentence answer grounded only in the provided verses and commentary.' },
               citations: {
                 type: 'array',
                 items: {
@@ -136,18 +207,44 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
             },
             required: ['answer', 'citations'],
           },
-        },
-      ],
-      tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
-    })
+        }],
+        tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
+      })
+      const toolBlock = message.content.find(b => b.type === 'tool_use') as
+        | { type: 'tool_use'; input: { answer: string; citations: Citation[] } }
+        | undefined
+      if (!toolBlock) throw new Error('no tool_use block in Claude response')
+      parsed       = toolBlock.input
+      inputTokens  = message.usage.input_tokens
+      outputTokens = message.usage.output_tokens
 
-    const toolBlock = message.content.find(b => b.type === 'tool_use') as
-      | { type: 'tool_use'; input: { answer: string; citations: Citation[] } }
-      | undefined
-    if (!toolBlock) throw new Error('no tool_use block in response')
-    parsed = toolBlock.input
+    } else if (generationModel.startsWith('deepinfra:')) {
+      const modelId = generationModel.slice('deepinfra:'.length)
+      ;({ parsed, inputTokens, outputTokens } = await callOpenAICompatible(
+        'https://api.deepinfra.com/v1/openai/chat/completions',
+        process.env.DEEPINFRA_API_KEY!,
+        modelId,
+      ))
+
+    } else if (generationModel.startsWith('groq:')) {
+      const modelId = generationModel.slice('groq:'.length)
+      ;({ parsed, inputTokens, outputTokens } = await callOpenAICompatible(
+        'https://api.groq.com/openai/v1/chat/completions',
+        process.env.GROQ_API_KEY!,
+        modelId,
+      ))
+
+    } else {
+      // Default: OpenRouter — pass model ID as-is (e.g. "meta-llama/llama-3.3-70b-instruct")
+      ;({ parsed, inputTokens, outputTokens } = await callOpenAICompatible(
+        'https://openrouter.ai/api/v1/chat/completions',
+        process.env.OPENROUTER_API_KEY!,
+        generationModel,
+        { 'HTTP-Referer': 'https://verselink.app', 'X-Title': 'VerseLink' },
+      ))
+    }
   } catch (err) {
-    console.error('Claude failed:', err)
+    console.error('Generation failed:', err)
     return NextResponse.json({ error: 'generation failed' }, { status: 500 })
   }
 
@@ -164,6 +261,12 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       text:       c.text,
       similarity: c.similarity,
     })),
+  }
+
+  // Benchmark-only telemetry — included only when caller passes `includeUsage: true`
+  if (includeUsage) {
+    response.inputTokens = inputTokens
+    response.outputTokens = outputTokens
   }
 
   return NextResponse.json(response)

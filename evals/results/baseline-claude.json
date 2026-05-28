@@ -1,0 +1,645 @@
+{
+  "summary": {
+    "model": "claude-sonnet-4-6",
+    "runAt": "2026-05-26T19:33:17.915Z",
+    "n": 30,
+    "avgQualityScore": 4.23,
+    "faithfulnessRate": 0.8,
+    "latencyP50Ms": 12830,
+    "latencyP95Ms": 17879,
+    "avgInputTokens": 2641,
+    "avgOutputTokens": 681,
+    "avgCostPerQueryUsd": 0.01814,
+    "dailyCostAtVolumeUsd": 181.41,
+    "monthlyCostAtVolumeUsd": 5442.33,
+    "volumeAssumption": "10000 queries/day",
+    "pricingNote": "Input $3/Mtok, Output $15/Mtok"
+  },
+  "results": [
+    {
+      "question": "What does Scripture say about anxiety and worry?",
+      "answer": "Scripture is clear and consistent: Jesus repeatedly commands his disciples not to be anxious, especially about basic needs like food, drink, and clothing. Matthew Henry helps us understand that this isn't about avoiding all practical thought, but rather about rejecting a \"disquieting, tormenting\" and \"distrustful, unbelieving\" kind of worry that springs from a lack of faith in God's promises and providence. Jesus even points out the futility of anxiety — it cannot add a single moment to our lives or a cubit to our height. Instead, we are called to cast our care upon God daily, trusting that He knows how to provide what we need even when we don't know how to get it.",
+      "retrieved": [
+        "Luke 12:25",
+        "Matthew 6:27",
+        "Luke 12:29",
+        "Luke 12:22",
+        "Matthew 6:31"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 12289,
+      "inputTokens": 2406,
+      "outputTokens": 668,
+      "costUsd": 0.017238
+    },
+    {
+      "question": "How should I handle grief and loss?",
+      "answer": "Grief and loss are a real and deeply human experience, and Scripture does not ask us to suppress or deny them. Jesus himself declared, \"Blessed are those who mourn, for they shall be comforted\" (Matthew 5:4), assuring us that mourning is not a sign of weakness but a place where God's comfort meets us. Matthew Henry reminds us that \"grace will keep sorrow from the heart... not from the house,\" meaning that faith does not make us immune to grief, but it does give us a sure hope to anchor us through it. For those grieving the loss of a believer, Henry also points us to the resurrection hope: because Christ died and rose again, those who \"sleep in Jesus\" are not lost — they are in His care, and we will see them again. We are also called to be present for one another in sorrow — \"where there are mourners there ought to be comforters,\" as Henry writes — so lean on your community, and let others walk through grief alongside you.",
+      "retrieved": [
+        "Matthew 5:4",
+        "Psalms 38:6",
+        "Isaiah 51:19",
+        "Jeremiah 10:19",
+        "Ezekiel 24:17"
+      ],
+      "citedRefs": [
+        "Matthew 5:4"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12841,
+      "inputTokens": 2729,
+      "outputTokens": 629,
+      "costUsd": 0.017622
+    },
+    {
+      "question": "What does the Bible say about forgiving others?",
+      "answer": "The Bible is clear and consistent: we are called to forgive others, just as God forgives us. In the Lord's Prayer, Jesus links our forgiveness from God directly to our willingness to forgive others — and He reinforces this with both a promise and a warning in Matthew 6:14-15. Luke 17:4 shows that this forgiveness should be repeated and generous, even when someone wrongs us multiple times. Matthew Henry reminds us that forgiving others is not merely optional — it is a mark of genuine faith and a condition for experiencing the comfort of God's own forgiveness. He also encourages us to view the wrongs done to us through a softened lens, calling them \"trespasses\" — stumbles and slips — rather than willful treasons, to make the work of forgiveness easier on our hearts.",
+      "retrieved": [
+        "Matthew 6:12",
+        "Matthew 6:14",
+        "Matthew 6:15",
+        "Luke 17:4",
+        "Matthew 18:35"
+      ],
+      "citedRefs": [
+        "Matthew 6:14-15",
+        "Luke 17:4"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 14842,
+      "inputTokens": 2753,
+      "outputTokens": 712,
+      "costUsd": 0.018939
+    },
+    {
+      "question": "How do I find strength when I am weak and exhausted?",
+      "answer": "When you are weak and exhausted, the Scriptures and Matthew Henry's commentary point clearly to God as your ultimate source of renewed strength. Isaiah 40:29 promises that God \"gives power to the weak\" and \"increases the strength of him who has no might\" — and Matthew Henry beautifully explains that this gift is especially given to those who humbly acknowledge their weakness rather than relying on their own sufficiency. The key is to *wait on the Lord* in faith: Henry notes that those who trust in themselves will \"faint and be weary,\" but those who depend on God \"shall renew their strength\" for every kind of work — doing, suffering, laboring, and bearing. Even the Psalmist, weary with sorrow, turned to God's Word for strength (Psalm 119:28), reminding us that in our most depleted moments, God's Word and His grace are the place to run.",
+      "retrieved": [
+        "Psalms 119:28",
+        "Isaiah 40:29",
+        "Isaiah 57:10",
+        "Job 6:11",
+        "Isaiah 35:3"
+      ],
+      "citedRefs": [
+        "Isaiah 40:29",
+        "Psalm 119:28"
+      ],
+      "faithful": false,
+      "qualityScore": 4,
+      "latencyMs": 12773,
+      "inputTokens": 2450,
+      "outputTokens": 595,
+      "costUsd": 0.016275
+    },
+    {
+      "question": "What does Scripture teach about faith?",
+      "answer": "Scripture teaches that faith is absolutely essential for pleasing God and receiving salvation. Faith comes through hearing God's Word, and it is credited to us as righteousness — as seen in Abraham's example. True faith, however, is not merely intellectual agreement; it must be accompanied by works, and it must be persevered in steadfastly to the end. Matthew Henry reminds us that we can only expect the \"happy end of our faith\" when we continue in it and are not moved away from it.",
+      "retrieved": [
+        "Romans 4:3",
+        "Romans 10:17",
+        "James 2:14",
+        "Hebrews 11:6",
+        "Romans 10:11"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 10745,
+      "inputTokens": 2330,
+      "outputTokens": 575,
+      "costUsd": 0.015615
+    },
+    {
+      "question": "How should a Christian pray?",
+      "answer": "A Christian should pray consistently and persistently, directing their heart toward God with sincerity rather than empty, repetitive words. Jesus modeled prayer by addressing God as \"Our Father in heaven\" and calling His name holy, showing that prayer begins with reverence. Matthew Henry reminds us that we should \"pray with all kinds of prayer\" — public and private, short and solemn — keeping a constant disposition toward prayer and watching for God's answers. Importantly, prayer is not about many words but about genuine dependence on God, who already knows our needs before we ask.",
+      "retrieved": [
+        "1 Thessalonians 5:17",
+        "Luke 11:1",
+        "Matthew 6:7",
+        "Matthew 6:9",
+        "Jeremiah 29:12"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 18230,
+      "inputTokens": 2695,
+      "outputTokens": 554,
+      "costUsd": 0.016395
+    },
+    {
+      "question": "What does the Bible say about love?",
+      "answer": "The Bible has much to say about love! At its core, love is rooted in the very nature of God — \"God is love\" (1 John 4:8), and because He first loved us, we are called to love one another (1 John 4:11). Love is described as patient, kind, free from envy and pride (1 Corinthians 13:4), and is even declared the greatest virtue — surpassing faith and hope (1 Corinthians 13:13). Jesus Himself commands us to love our neighbors as ourselves (Matthew 22:39), and Matthew Henry reminds us that brotherly love is the very \"badge of Christ's disciples\" — the distinguishing mark by which the world recognizes followers of Jesus.",
+      "retrieved": [
+        "1 Corinthians 13:4",
+        "1 John 4:11",
+        "1 John 4:8",
+        "Matthew 22:39",
+        "1 Corinthians 13:13"
+      ],
+      "citedRefs": [
+        "1 John 4:8",
+        "1 John 4:11",
+        "1 Corinthians 13:4",
+        "1 Corinthians 13:13",
+        "Matthew 22:39"
+      ],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 12557,
+      "inputTokens": 2668,
+      "outputTokens": 653,
+      "costUsd": 0.017799000000000002
+    },
+    {
+      "question": "How do I resist temptation?",
+      "answer": "Resisting temptation requires both vigilance and reliance on God. First, we must understand that temptation comes from within — our own desires — not from God (James 1:13-14), so we must be honest about the source and take personal responsibility. Second, we are called to \"watch and pray\" (Mark 14:38), recognizing that while our spirit may be willing, our flesh is weak. Matthew Henry reminds us that \"resolution shuts and bolts the door against temptation\" — if we yield, the enemy continues; if we resist, he flees. We are also encouraged by the promise that God will always provide a way of escape (1 Corinthians 10:13), and that putting on the full armor of God — drawing on His strength, not our own — is what enables us to stand firm.",
+      "retrieved": [
+        "James 1:13",
+        "James 1:14",
+        "1 Corinthians 10:13",
+        "Mark 14:38",
+        "Matthew 26:41"
+      ],
+      "citedRefs": [
+        "James 1:13-14",
+        "Mark 14:38",
+        "1 Corinthians 10:13"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15416,
+      "inputTokens": 2754,
+      "outputTokens": 747,
+      "costUsd": 0.019466999999999998
+    },
+    {
+      "question": "What does Scripture say about hope?",
+      "answer": "Scripture presents hope as a precious gift rooted in God Himself and nourished through His Word. Romans 15:4 teaches that the Scriptures were written precisely so that we might have hope — through perseverance and the encouragement they provide. This hope is not a vague wish, but a confident expectation: Proverbs 23:18 assures us that \"there is a future hope, and your hope will not be cut off.\" And in Romans 15:13, God Himself is called \"the God of hope,\" who fills believers with joy and peace so that they may abound in hope through the power of the Holy Spirit. Matthew Henry beautifully reminds us that patience under trials and the comfort drawn from Scripture work together to strengthen this hope — for \"nothing is more destructive to hope than impatience,\" and the comfort of Scripture is like an earnest, a down payment, of the good things hoped for.",
+      "retrieved": [
+        "Romans 15:4",
+        "Proverbs 23:18",
+        "1 Corinthians 9:10",
+        "Psalms 119:49",
+        "Romans 15:13"
+      ],
+      "citedRefs": [
+        "Romans 15:4",
+        "Proverbs 23:18",
+        "Romans 15:13"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 14138,
+      "inputTokens": 2642,
+      "outputTokens": 705,
+      "costUsd": 0.018501
+    },
+    {
+      "question": "What does the Bible say about money and the love of wealth?",
+      "answer": "The Bible gives a clear and serious warning about the love of money and the pursuit of wealth. 1 Timothy 6:10 tells us that \"the love of money is a root of all kinds of evil,\" and that those driven by greed have \"erred from the faith\" and \"pierced themselves through with many sorrows.\" This is not just about having money, but about loving it inordinately — making it the chief goal of one's heart. 1 Timothy 6:9 adds that those determined to be rich \"fall into a temptation, a snare, and many foolish and harmful lusts, such as drown men in ruin and destruction.\" Matthew Henry explains that worldly lusts are both foolish (we should be ashamed of them) and hurtful (we should be afraid of them). The antidote, according to Hebrews 13:5, is contentment rooted not in wealth, but in God's promise: \"I will in no way leave you, neither will I in any way forsake you.\" Matthew Henry on Matthew 6 further reminds us that God and Mammon (worldly gain) are opposing masters — we cannot serve both, for God says \"Be content with such things as ye have,\" while Mammon says \"Grasp at all that ever thou canst.\"",
+      "retrieved": [
+        "1 Timothy 6:10",
+        "1 Timothy 6:9",
+        "Psalms 49:6",
+        "Hebrews 13:5",
+        "Proverbs 21:17"
+      ],
+      "citedRefs": [
+        "1 Timothy 6:10",
+        "1 Timothy 6:9",
+        "Hebrews 13:5",
+        "Matthew 6"
+      ],
+      "faithful": false,
+      "qualityScore": 4,
+      "latencyMs": 15491,
+      "inputTokens": 2850,
+      "outputTokens": 847,
+      "costUsd": 0.021255
+    },
+    {
+      "question": "What does Scripture say about pride and humility?",
+      "answer": "Scripture is remarkably consistent on this theme: pride leads to destruction and shame, while humility leads to wisdom and honor. Proverbs repeatedly warns that a proud heart is a sign that ruin is near, and that lowering oneself in humility is the path to being lifted up. Matthew Henry reinforces this by showing that God Himself actively opposes the proud — setting Himself against them as in battle — while lavishing grace upon the humble. The ultimate illustration is found in Luke 18, where the proud Pharisee leaves unjustified before God, while the humble publican receives forgiveness and God's acceptance.",
+      "retrieved": [
+        "Proverbs 11:2",
+        "Proverbs 18:12",
+        "Proverbs 16:18",
+        "Proverbs 29:23",
+        "Job 40:12"
+      ],
+      "citedRefs": [
+        "Luke 18"
+      ],
+      "faithful": false,
+      "qualityScore": 3,
+      "latencyMs": 16933,
+      "inputTokens": 2667,
+      "outputTokens": 830,
+      "costUsd": 0.020450999999999997
+    },
+    {
+      "question": "How can I know and follow God's will for my life?",
+      "answer": "Knowing and following God's will begins with a genuine desire to do it. Jesus teaches in John 7:17 that if anyone truly *wants* to do God's will, they will come to know it. This inward willingness opens the heart to understanding. Paul reinforces this in Ephesians 5:17, urging believers not to be foolish but to actively seek to understand what the Lord's will is. Matthew Henry explains that those who are transformed by the renewing of their minds are best equipped to discern God's will — not merely as a matter of clever reasoning, but through a living, humble, and obedient heart that \"loves it, and practises it, and has the relish and savour of it.\" Furthermore, we are to hold our plans with humility and submission, as James 4:15 reminds us to say, \"If the Lord wills, we will both live, and do this or that\" — recognizing that following God's will is a daily surrender, not a one-time discovery.",
+      "retrieved": [
+        "Romans 2:18",
+        "John 7:17",
+        "James 4:15",
+        "Hebrews 10:7",
+        "Ephesians 5:17"
+      ],
+      "citedRefs": [
+        "John 7:17",
+        "Ephesians 5:17",
+        "James 4:15"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12548,
+      "inputTokens": 2659,
+      "outputTokens": 625,
+      "costUsd": 0.017352
+    },
+    {
+      "question": "What does Scripture say about suffering and trials?",
+      "answer": "Scripture teaches that suffering and trials are not accidents or surprises for the believer — they are actually granted by God as part of the Christian life. Believers are called not only to faith in Christ, but also to suffer on His behalf, and these sufferings are purposeful: they produce perseverance and can even be a source of rejoicing. Matthew Henry reminds us that Christians should not think it strange when trials come, but rather rejoice, because our sufferings are of the same kind as Christ's, and if we share in His sufferings, we will also share in His glory. Most beautifully, we are never alone in our suffering — the comfort of Christ abounds to us even as the sufferings increase.",
+      "retrieved": [
+        "Philippians 1:29",
+        "Luke 22:28",
+        "Romans 5:3",
+        "2 Corinthians 1:6",
+        "2 Corinthians 1:5"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 13169,
+      "inputTokens": 2744,
+      "outputTokens": 646,
+      "costUsd": 0.017922
+    },
+    {
+      "question": "How should I treat my enemies?",
+      "answer": "Scripture is wonderfully clear on this challenging topic! Rather than harboring hatred or seeking revenge, you are called to actively love your enemies — feeding them when they're hungry, giving them water when they're thirsty, blessing those who curse you, doing good to those who hate you, and praying for those who mistreat and persecute you. Matthew Henry reminds us that this is not a natural impulse — we tend to wish harm on those who hurt us — but grace must conquer that root of bitterness within us. The goal is to reflect the very character of God, who loved us even when we were His enemies, and to potentially win over our enemies through acts of genuine kindness and prayer.",
+      "retrieved": [
+        "Proverbs 25:21",
+        "Psalms 139:22",
+        "Matthew 5:44",
+        "Psalms 25:19",
+        "Romans 12:20"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 12548,
+      "inputTokens": 2693,
+      "outputTokens": 678,
+      "costUsd": 0.018249
+    },
+    {
+      "question": "What does the Bible say about peace?",
+      "answer": "The Bible presents peace as one of God's greatest gifts to His people. Jesus personally bequeaths His peace to His followers — a peace that is not superficial or dependent on circumstances, but a deep, abiding tranquility of heart and mind (John 14:27). This peace is not something we manufacture ourselves; it is created and given by God (Romans 15:33), preached by Christ to all people near and far (Ephesians 2:17), and something we are actively called to seek and pursue in our daily lives (Psalms 34:14). Matthew Henry beautifully captures it: Christ's peace is \"of such a nature that the smiles of the world cannot give it, nor the frowns of the world take it away.\" We are also called to live out this peace in our relationships with others, doing everything within our power to be at peace with all people (Romans 12:18).",
+      "retrieved": [
+        "Romans 12:18",
+        "Romans 15:33",
+        "John 14:27",
+        "Ephesians 2:17",
+        "Psalms 34:14"
+      ],
+      "citedRefs": [
+        "John 14:27",
+        "Romans 15:33",
+        "Ephesians 2:17",
+        "Psalms 34:14",
+        "Romans 12:18"
+      ],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 12383,
+      "inputTokens": 2352,
+      "outputTokens": 681,
+      "costUsd": 0.017271
+    },
+    {
+      "question": "How do I gain wisdom?",
+      "answer": "Gaining wisdom begins with recognizing its supreme value and pursuing it wholeheartedly. Proverbs 4:7 tells us to get wisdom above all else, even at great personal cost. Matthew Henry on Proverbs 2 explains that this pursuit requires earnest prayer (\"lift up your voice to heaven\"), a willing heart, and diligent effort — likened to a miner who digs tirelessly for silver. Ultimately, as Matthew Henry on 1 Kings 4 reminds us, true wisdom is a gift from God (citing Proverbs 2:6), and it is obtained through humble dependence on Him, just as Solomon prayed for it and received it. Psalm 90:12 adds a beautiful practical step: asking God to teach us to number our days, so that our hearts may be shaped by wisdom in how we live.",
+      "retrieved": [
+        "Job 28:20",
+        "Proverbs 4:7",
+        "Psalms 90:12",
+        "Job 28:12",
+        "Proverbs 1:2"
+      ],
+      "citedRefs": [
+        "Proverbs 4:7",
+        "Proverbs 2",
+        "1 Kings 4",
+        "Proverbs 2:6",
+        "Psalm 90:12"
+      ],
+      "faithful": false,
+      "qualityScore": 4,
+      "latencyMs": 12059,
+      "inputTokens": 2624,
+      "outputTokens": 590,
+      "costUsd": 0.016722
+    },
+    {
+      "question": "What does Scripture say about caring for the poor?",
+      "answer": "Scripture consistently calls God's people to open-hearted generosity toward the poor, warning against exploitation and promising blessing to those who show compassion. Deuteronomy commands us not to harden our hearts or shut our hands from the poor among us, and Proverbs assures us that showing pity to the poor is like lending directly to God Himself — and He will reward it. The Psalms even promise divine protection and deliverance to those who consider the poor. Matthew Henry deepens this by reminding us that God takes personal offense at the mistreatment of the poor, since He is their Maker, and takes personal pleasure in the kindness shown to them — as if it were done to Himself.",
+      "retrieved": [
+        "Proverbs 22:22",
+        "Deuteronomy 15:11",
+        "Proverbs 19:17",
+        "Deuteronomy 15:7",
+        "Psalms 41:1"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 15017,
+      "inputTokens": 2727,
+      "outputTokens": 748,
+      "costUsd": 0.019401
+    },
+    {
+      "question": "What does the Bible say about waiting and patience?",
+      "answer": "The Bible consistently calls believers to patient waiting, especially in light of Christ's coming. Romans 8:25 teaches that hope and patience go hand in hand — because we hope for what we cannot yet see, we are called to wait with patience. James 5:7-8 uses the beautiful picture of a farmer waiting for rain to encourage believers to likewise be patient until the Lord's return, establishing their hearts in the certainty that His coming is near. Matthew Henry reinforces this by noting that the shortness of our waiting time — and the greatness of what we wait for — should strengthen us, and that fretfulness and impatience only bring more trouble upon us. Ultimately, God Himself is our model: 2 Peter 3:9 reminds us that God's own patience is rooted in His deep desire that all people come to repentance, showing us that patience is not weakness, but love in action.",
+      "retrieved": [
+        "Romans 8:25",
+        "Job 6:11",
+        "James 5:7",
+        "James 5:8",
+        "2 Peter 3:9"
+      ],
+      "citedRefs": [
+        "Romans 8:25",
+        "James 5:7-8",
+        "2 Peter 3:9"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15080,
+      "inputTokens": 2680,
+      "outputTokens": 672,
+      "costUsd": 0.01812
+    },
+    {
+      "question": "How do I deal with doubt and unbelief?",
+      "answer": "Doubt and unbelief are real struggles that even sincere believers face, but Scripture and the wisdom of Matthew Henry offer us both honest acknowledgment and practical hope. The father in Mark 9:24 models the perfect response: cry out to Jesus with honesty — \"I believe; help my unbelief!\" — admitting your weakness while trusting Christ to supply what is lacking. Matthew Henry reminds us that even those who have genuine faith have reason to acknowledge unbelief within themselves, and that the solution is to \"look up to Christ for grace to help against it.\" We must not be discouraged by doubt, but bring it directly to Jesus, recognizing that when our faith falls short, it is His grace that strengthens and perfects us in our weakness.",
+      "retrieved": [
+        "Matthew 13:58",
+        "Mark 9:24",
+        "Hebrews 3:19",
+        "John 9:36",
+        "Luke 24:38"
+      ],
+      "citedRefs": [
+        "Mark 9:24"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12075,
+      "inputTokens": 2667,
+      "outputTokens": 614,
+      "costUsd": 0.017210999999999997
+    },
+    {
+      "question": "What does Scripture say about anger?",
+      "answer": "Scripture teaches that anger is a natural human emotion, but it must be carefully guarded. We are warned not to sin in our anger, not to let it linger, and not to act hastily — for uncontrolled anger stirs up strife, abounds in sin, and ultimately cannot produce the righteousness God desires. Matthew Henry helpfully distinguishes that anger becomes sinful when it is without just cause, without a good end, or when it exceeds proper bounds. The goal is not the elimination of all emotion, but the disciplined, Spirit-guided use of it.",
+      "retrieved": [
+        "Ephesians 4:26",
+        "Proverbs 29:22",
+        "Ecclesiastes 7:9",
+        "James 1:20",
+        "Proverbs 15:18"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12830,
+      "inputTokens": 2774,
+      "outputTokens": 642,
+      "costUsd": 0.017952
+    },
+    {
+      "question": "What does the Bible say about death and eternal life?",
+      "answer": "The Bible teaches that death is the consequence of sin, but God graciously offers eternal life as a free gift through Jesus Christ. Eternal life is not something we earn — it is given to us by God and found only in His Son. This life is promised to all who believe in Christ, and it far surpasses earthly life in both excellence and duration. As Matthew Henry explains, this eternal life begins now in the believer's knowledge of and communion with God, and will one day be perfected in the full vision and presence of God forever.",
+      "retrieved": [
+        "Romans 6:23",
+        "Romans 5:21",
+        "1 John 5:11",
+        "John 3:15",
+        "1 John 2:25"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 11434,
+      "inputTokens": 2611,
+      "outputTokens": 589,
+      "costUsd": 0.016668000000000002
+    },
+    {
+      "question": "What does Scripture say about generosity and giving?",
+      "answer": "Scripture consistently calls God's people to give generously, cheerfully, and proportionally to how God has blessed them. In Deuteronomy 16:17, giving is tied directly to God's blessing — we give according to what He has given us. Luke 6:38 adds a beautiful promise: generous giving is met with an overflowing return from God. Proverbs 22:9 connects a \"generous eye\" with blessing, noting that sharing with the poor is at the heart of righteous living. Matthew Henry reinforces this, urging us to give not just a little, but largely and from the heart — \"Let the heart go along with the gift; for God loves a cheerful giver.\" Ultimately, 2 Corinthians 9:11 reminds us that God enriches us precisely so that we can be generous, and that generosity itself produces thanksgiving to God.",
+      "retrieved": [
+        "Deuteronomy 16:17",
+        "Luke 6:38",
+        "Psalms 37:21",
+        "2 Corinthians 9:11",
+        "Proverbs 22:9"
+      ],
+      "citedRefs": [
+        "Deuteronomy 16:17",
+        "Luke 6:38",
+        "Proverbs 22:9",
+        "2 Corinthians 9:11"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15454,
+      "inputTokens": 2717,
+      "outputTokens": 912,
+      "costUsd": 0.021831
+    },
+    {
+      "question": "How do I resolve conflict with other people?",
+      "answer": "Scripture gives us several practical and heart-level principles for resolving conflict with others. First, reconciliation with a brother or sister takes priority — Jesus even instructs us to pause our worship and go make things right before returning to God (Matthew 5:24). Second, we are called to pursue peace as much as it depends on us (Romans 12:18), and to be proactive — Proverbs 17:14 warns that strife, once it begins, is like a dam breaking, so we must address conflict early before it escalates. Matthew Henry also reminds us that when someone wrongs us, we should guard our hearts and tongues in the heat of the moment, speak to the person directly about the offense, and be ready to forgive upon repentance (Matthew Henry on Luke 17). Finally, Proverbs cautions us not to pick unnecessary fights — if no real harm has been done, it is wiser not to strive at all (Proverbs 3:30).",
+      "retrieved": [
+        "Matthew 5:24",
+        "Proverbs 17:14",
+        "Romans 12:18",
+        "Proverbs 3:30",
+        "Proverbs 25:9"
+      ],
+      "citedRefs": [
+        "Matthew 5:24",
+        "Romans 12:18",
+        "Proverbs 17:14",
+        "Luke 17",
+        "Proverbs 3:30"
+      ],
+      "faithful": false,
+      "qualityScore": 4,
+      "latencyMs": 14266,
+      "inputTokens": 2725,
+      "outputTokens": 655,
+      "costUsd": 0.018000000000000002
+    },
+    {
+      "question": "What does the Bible say about trusting God?",
+      "answer": "The Bible has a great deal to say about trusting God! Scripture calls us to trust God with our whole heart (Proverbs 3:5), to commit our very way of life to Him (Psalms 37:5), and to run to Him even in our moments of fear (Psalms 56:3). Matthew Henry beautifully captures this by reminding us that we must \"have an habitual confidence in God always\" — trusting Him in every situation, whether we are in doubt, danger, or want. Most wonderfully, Psalms 84:12 declares that the person who trusts in God is truly *blessed*, and Matthew Henry affirms that even when we are cut off from outward blessings, we are never cut off from blessedness itself if our trust remains in God.",
+      "retrieved": [
+        "Psalms 56:11",
+        "Psalms 56:3",
+        "Psalms 37:5",
+        "Psalms 84:12",
+        "Proverbs 3:5"
+      ],
+      "citedRefs": [
+        "Proverbs 3:5",
+        "Psalms 37:5",
+        "Psalms 56:3",
+        "Psalms 84:12"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 11714,
+      "inputTokens": 2317,
+      "outputTokens": 683,
+      "costUsd": 0.017196
+    },
+    {
+      "question": "How does Scripture describe God's love for us?",
+      "answer": "Scripture describes God's love as the very foundation of His nature and the origin of all His actions toward us. God doesn't just *show* love — He *is* love, and this love was entirely His initiative, not something we earned or offered first. The clearest expression of this love was sending His Son as an atoning sacrifice for our sins, even while we were undeserving and unclean. Matthew Henry beautifully captures this as \"unusual, unprecedented love\" — God loved us when we had no love for Him, when we lay in guilt and misery. This love should move us to love both God and one another in return.",
+      "retrieved": [
+        "1 John 4:19",
+        "1 John 4:16",
+        "Ephesians 2:4",
+        "1 John 4:8",
+        "1 John 4:10"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 9750,
+      "inputTokens": 2732,
+      "outputTokens": 537,
+      "costUsd": 0.016251
+    },
+    {
+      "question": "What does the Bible say about confession and repentance from sin?",
+      "answer": "The Bible makes clear that confession and repentance are essential responses to sin. Concealing sin leads to no prosperity, but confessing and turning from sin brings mercy and forgiveness (Proverbs 28:13; 1 John 1:9). True repentance, as Matthew Henry explains, involves two things: turning *from* sin with loathing and abhorrence, and turning *to* God — returning to Him as our sovereign Lord and the source of life. This is not merely an outward change of behavior, but a deep change of the heart and mind. Acts 3:19 adds a beautiful promise: when we repent and turn back to God, our sins are blotted out and we receive \"times of refreshing from the presence of the Lord.\"",
+      "retrieved": [
+        "Proverbs 28:13",
+        "Acts 3:19",
+        "Leviticus 5:5",
+        "Matthew 3:2",
+        "1 John 1:9"
+      ],
+      "citedRefs": [
+        "Proverbs 28:13",
+        "1 John 1:9",
+        "Acts 3:19"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 11429,
+      "inputTokens": 2723,
+      "outputTokens": 625,
+      "costUsd": 0.017543999999999997
+    },
+    {
+      "question": "What does Scripture say about fear?",
+      "answer": "Scripture presents fear from several angles. First, there is a natural, human fear — a trembling and horror that can overwhelm us (Psalm 55:5), and a real danger of \"sudden fear\" or the terror that comes with judgment (Proverbs 3:25, Isaiah 24:17). Yet God's Word consistently calls His people not to be ruled by such fears. Proverbs 3:25 directly reassures us not to be afraid of sudden fear or the desolation of the wicked. Instead, Scripture points us toward a holy, reverential fear of God Himself — a fear that actually displaces and overcomes all lesser fears. Matthew Henry explains that \"the believing fear of God is a special preservative against the disquieting fear of man,\" and that we are to sanctify the Lord of hosts, making Him the true object of our awe. Even earthly powers are subject to God's authority, for He \"shall cut off the spirit of princes\" and is \"terrible to the kings of the earth.\" Ultimately, Jesus teaches that God — who has power over both body and soul — is the One most worthy of our fear, and that His providential care over even the smallest creatures means His people can trust Him fully in times of danger.",
+      "retrieved": [
+        "Isaiah 24:17",
+        "Psalms 55:5",
+        "Proverbs 3:25",
+        "Psalms 14:5",
+        "Acts 5:11"
+      ],
+      "citedRefs": [
+        "Psalm 55:5",
+        "Proverbs 3:25",
+        "Isaiah 24:17"
+      ],
+      "faithful": false,
+      "qualityScore": 3,
+      "latencyMs": 17879,
+      "inputTokens": 2482,
+      "outputTokens": 1007,
+      "costUsd": 0.022551
+    },
+    {
+      "question": "What does the Bible say about joy?",
+      "answer": "The Bible has much to say about joy! Joy is not a passing emotion but a deep, sustaining gift rooted in God Himself. We are called to \"rejoice in the Lord always\" (Philippians 4:4) and to \"always rejoice\" (1 Thessalonians 5:16) — not just in good times, but as a constant posture of the heart. This joy flows from God's salvation (Isaiah 12:3) and His mighty works on behalf of His people (Psalms 105:43). Matthew Henry reminds us that true joy must be holy joy, terminating in God Himself: \"All the lines of joy must meet in him as in the centre.\" Furthermore, this joy is not passive — it strengthens us for obedience, fuels our worship, and arms us against spiritual enemies. As Henry puts it, \"Holy joy will be oil to the wheels of our obedience.\"",
+      "retrieved": [
+        "Luke 1:14",
+        "Psalms 105:43",
+        "Philippians 4:4",
+        "1 Thessalonians 5:16",
+        "Isaiah 12:3"
+      ],
+      "citedRefs": [
+        "Philippians 4:4",
+        "1 Thessalonians 5:16",
+        "Isaiah 12:3",
+        "Psalms 105:43"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15247,
+      "inputTokens": 2684,
+      "outputTokens": 684,
+      "costUsd": 0.018312000000000002
+    },
+    {
+      "question": "What does Scripture say about marriage?",
+      "answer": "Scripture presents marriage as a sacred, God-ordained institution rooted in creation itself. From the beginning, God designed a man and woman to leave their families and be joined together as \"one flesh\" — a bond so profound that Matthew Henry describes it as \"the most intimate union that can be,\" surpassing even the bonds of parent and child. Because God himself joins husband and wife together, this union is not to be broken by human decision. Marriage is to be held in honor by all, and the marriage bed kept pure, with God himself as the judge of those who violate it. Remarkably, the mutual, self-giving nature of marriage — where husband and wife each belong to the other — reflects something even deeper: the mystical union between Christ and his Church.",
+      "retrieved": [
+        "Matthew 19:5",
+        "Matthew 19:6",
+        "1 Corinthians 7:4",
+        "Hebrews 13:4",
+        "Mark 10:8"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12759,
+      "inputTokens": 2612,
+      "outputTokens": 658,
+      "costUsd": 0.017706
+    },
+    {
+      "question": "How does God comfort those who are hurting?",
+      "answer": "God personally and tenderly comforts those who are hurting, much like a mother comforts her child (Isaiah 66:13). He heals broken hearts and binds up wounds (Psalms 147:3), and He even restores comfort to those in mourning (Isaiah 57:18). Matthew Henry reminds us that God \"takes it among the titles of his honour to be the God that comforts those that are cast down; he delights in being so\" — meaning comfort is not an afterthought for God, but a defining characteristic of who He is. Furthermore, the comfort we receive from God is meant to flow outward, equipping us to comfort others who are also suffering (2 Corinthians 1:4).",
+      "retrieved": [
+        "Isaiah 40:1",
+        "2 Corinthians 1:4",
+        "Isaiah 66:13",
+        "Psalms 147:3",
+        "Isaiah 57:18"
+      ],
+      "citedRefs": [
+        "Isaiah 66:13",
+        "Psalms 147:3",
+        "Isaiah 57:18",
+        "2 Corinthians 1:4"
+      ],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 13110,
+      "inputTokens": 2749,
+      "outputTokens": 678,
+      "costUsd": 0.018417000000000003
+    }
+  ]
+}

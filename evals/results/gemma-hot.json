@@ -1,0 +1,579 @@
+{
+  "summary": {
+    "model": "deepinfra:google/gemma-3-27b-it",
+    "runAt": "2026-05-27T11:52:37.778Z",
+    "n": 30,
+    "avgQualityScore": 4.3,
+    "faithfulnessRate": 0.967,
+    "latencyP50Ms": 12723,
+    "latencyP95Ms": 18842,
+    "avgInputTokens": 2196,
+    "avgOutputTokens": 346,
+    "avgCostPerQueryUsd": 0.00023,
+    "dailyCostAtVolumeUsd": 2.31,
+    "monthlyCostAtVolumeUsd": 69.31,
+    "volumeAssumption": "10000 queries/day",
+    "pricingNote": "Input $0.08/Mtok, Output $0.16/Mtok"
+  },
+  "results": [
+    {
+      "question": "What does Scripture say about anxiety and worry?",
+      "answer": "Scripture directly addresses anxiety, stating that worrying doesn't change our circumstances—it doesn’t add to our height or lifespan [1, 2]. We are instructed not to be anxious about essential needs like food, drink, or clothing [3, 4, 5], as this demonstrates a lack of trust in God’s provision. Matthew Henry explains that excessive care stems from distrusting God’s promises and attempting to control outcomes that are rightly in His hands [7, 8].",
+      "retrieved": [
+        "Luke 12:25",
+        "Matthew 6:27",
+        "Luke 12:29",
+        "Luke 12:22",
+        "Matthew 6:31"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 19532,
+      "inputTokens": 1989,
+      "outputTokens": 505,
+      "costUsd": 0.00023992000000000002
+    },
+    {
+      "question": "How should I handle grief and loss?",
+      "answer": "It is natural to mourn when experiencing loss, and blessed are those who do, for they shall be comforted [1].  Sometimes grief can be intense, as described in Psalms, where one can be in pain and mourning all day long [2]. Even when facing difficult circumstances, we are called to bear our grief, trusting in God’s plan [4].",
+      "retrieved": [
+        "Matthew 5:4",
+        "Psalms 38:6",
+        "Isaiah 51:19",
+        "Jeremiah 10:19",
+        "Ezekiel 24:17"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12723,
+      "inputTokens": 2282,
+      "outputTokens": 242,
+      "costUsd": 0.00022128000000000002
+    },
+    {
+      "question": "What does the Bible say about forgiving others?",
+      "answer": "The Bible makes a clear connection between forgiving others and receiving forgiveness from God. Jesus teaches us to pray for forgiveness of our debts in the same way we forgive those who are indebted to us [1].  If we do not forgive others, our own forgiveness is jeopardized [3, 5]. We are even encouraged to forgive repeatedly, as demonstrated in the example of forgiving someone who repents seven times in a day [4].",
+      "retrieved": [
+        "Matthew 6:12",
+        "Matthew 6:14",
+        "Matthew 6:15",
+        "Luke 17:4",
+        "Matthew 18:35"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 15515,
+      "inputTokens": 2271,
+      "outputTokens": 397,
+      "costUsd": 0.0002452
+    },
+    {
+      "question": "How do I find strength when I am weak and exhausted?",
+      "answer": "When feeling weak, remember that God gives power to those who have no might, and He can strengthen you according to His word. Even when weary from life's challenges, do not give up hope, as God offers reviving strength to those who persevere. He promises to renew your strength as you wait on Him and trust in His guidance.",
+      "retrieved": [
+        "Psalms 119:28",
+        "Isaiah 40:29",
+        "Isaiah 57:10",
+        "Job 6:11",
+        "Isaiah 35:3"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15559,
+      "inputTokens": 2004,
+      "outputTokens": 404,
+      "costUsd": 0.00022496
+    },
+    {
+      "question": "What does Scripture teach about faith?",
+      "answer": "Scripture indicates that faith is essential for being accounted righteous, as Abraham’s belief was credited to him for righteousness [1]. Furthermore, faith comes through hearing the word of God [2], and it's impossible to please God without believing He exists and rewards those who seek Him [4]. However, faith without corresponding actions is insufficient, as true faith must be demonstrated through works [3].",
+      "retrieved": [
+        "Romans 4:3",
+        "Romans 10:17",
+        "James 2:14",
+        "Hebrews 11:6",
+        "Romans 10:11"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 14323,
+      "inputTokens": 1935,
+      "outputTokens": 385,
+      "costUsd": 0.00021640000000000003
+    },
+    {
+      "question": "How should a Christian pray?",
+      "answer": "Christians should pray constantly, keeping up a disposition to prayer and intermixing ejaculatory prayers with daily life, as shown in 1 Thessalonians 5:17. When we pray, we should avoid repeating phrases thinking to be heard by our much speaking, but rather direct our prayers to God as our Father in heaven, aiming for His glory as our highest end, as explained in Matthew 6:7 and 6:9. Additionally, we should pray with all kinds of prayer – public, private, and secret – and always in the Spirit, abiding by the duty of prayer with perseverance.",
+      "retrieved": [
+        "1 Thessalonians 5:17",
+        "Luke 11:1",
+        "Matthew 6:7",
+        "Matthew 6:9",
+        "Jeremiah 29:12"
+      ],
+      "citedRefs": [
+        "1 Thessalonians 5:17",
+        "Matthew 6:7"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 15260,
+      "inputTokens": 2248,
+      "outputTokens": 362,
+      "costUsd": 0.00023776
+    },
+    {
+      "question": "What does the Bible say about love?",
+      "answer": "The Bible presents love as a core characteristic of both God and His followers. Specifically, love is described as being patient and kind, not envious or boastful, and is considered the greatest of faith, hope, and love. Because God loves us, we are called to love one another, and this love is a demonstration that we truly know God, for God *is* love.",
+      "retrieved": [
+        "1 Corinthians 13:4",
+        "1 John 4:11",
+        "1 John 4:8",
+        "Matthew 22:39",
+        "1 Corinthians 13:13"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 10227,
+      "inputTokens": 2239,
+      "outputTokens": 288,
+      "costUsd": 0.0002252
+    },
+    {
+      "question": "How do I resist temptation?",
+      "answer": "We must actively resist temptation and not believe that God is the source of it, as God cannot be tempted and does not tempt others [1]. James teaches us that temptation arises from our own desires [2], and 1 Corinthians reminds us that God provides a way of escape alongside temptation, ensuring we aren't overwhelmed [3]. Matthew Henry emphasizes the importance of avoiding the tempter altogether, as staying in harm’s way invites trouble [6], and that we should stir ourselves up to resist temptation in reliance on God’s strength [8].",
+      "retrieved": [
+        "James 1:13",
+        "James 1:14",
+        "1 Corinthians 10:13",
+        "Mark 14:38",
+        "Matthew 26:41"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 18842,
+      "inputTokens": 2283,
+      "outputTokens": 450,
+      "costUsd": 0.00025464000000000004
+    },
+    {
+      "question": "What does Scripture say about hope?",
+      "answer": "Scripture tells us that all things written were written for our learning, that we might have hope through perseverance and encouragement from the Scriptures [1]. We are also assured that there is a future hope, and our hope will not be cut off [2], and that those who work should do so in hope of partaking of its benefits [3].  Furthermore, God Himself is the God of hope, and He fills believers with joy and peace so that they may abound in hope [5].",
+      "retrieved": [
+        "Romans 15:4",
+        "Proverbs 23:18",
+        "1 Corinthians 9:10",
+        "Psalms 119:49",
+        "Romans 15:13"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 14588,
+      "inputTokens": 2221,
+      "outputTokens": 426,
+      "costUsd": 0.00024584
+    },
+    {
+      "question": "What does the Bible say about money and the love of wealth?",
+      "answer": "The Bible cautions against the love of money, warning that it is a root of many evils and can lead people astray from their faith and into sorrow. Those who pursue riches are susceptible to temptation, foolish lusts, and even ruin and destruction. Ultimately, contentment with what one has is encouraged, trusting in God's promise to never leave or forsake, rather than seeking wealth.",
+      "retrieved": [
+        "1 Timothy 6:10",
+        "1 Timothy 6:9",
+        "Psalms 49:6",
+        "Hebrews 13:5",
+        "Proverbs 21:17"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 17721,
+      "inputTokens": 2373,
+      "outputTokens": 473,
+      "costUsd": 0.00026552
+    },
+    {
+      "question": "What does Scripture say about pride and humility?",
+      "answer": "Scripture consistently contrasts pride with humility, showing that pride leads to negative consequences while humility is honored by God. Proverbs clearly states that pride precedes destruction and shame, but humility brings wisdom and honor [1, 3, 4]. God actively resists the proud, but gives grace to the humble, demonstrating a clear difference in how He responds to these opposing attitudes [6, 8].",
+      "retrieved": [
+        "Proverbs 11:2",
+        "Proverbs 18:12",
+        "Proverbs 16:18",
+        "Proverbs 29:23",
+        "Job 40:12"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 3,
+      "latencyMs": 12314,
+      "inputTokens": 2205,
+      "outputTokens": 337,
+      "costUsd": 0.00023032
+    },
+    {
+      "question": "How can I know and follow God's will for my life?",
+      "answer": "Understanding and doing God’s will is something we can actively pursue. According to Scripture, if anyone truly desires to do God’s will, they will understand His teaching [2]. Furthermore, we are instructed to understand what the will of the Lord is [5], and to approve of what is excellent by being instructed in the law [1]. \n",
+      "retrieved": [
+        "Romans 2:18",
+        "John 7:17",
+        "James 4:15",
+        "Hebrews 10:7",
+        "Ephesians 5:17"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 12369,
+      "inputTokens": 2252,
+      "outputTokens": 258,
+      "costUsd": 0.00022144
+    },
+    {
+      "question": "What does Scripture say about suffering and trials?",
+      "answer": "Scripture indicates that suffering is a reality for believers, and it's even *granted* to us by God. We are not surprised by trials, and we can even rejoice in them, knowing that suffering builds perseverance and allows us to comfort others. As Christians, we share in the sufferings of Christ, and through Him, we also receive comfort.",
+      "retrieved": [
+        "Philippians 1:29",
+        "Luke 22:28",
+        "Romans 5:3",
+        "2 Corinthians 1:6",
+        "2 Corinthians 1:5"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 12900,
+      "inputTokens": 2282,
+      "outputTokens": 352,
+      "costUsd": 0.00023888000000000002
+    },
+    {
+      "question": "How should I treat my enemies?",
+      "answer": "The Bible calls us to a surprising response to our enemies: love, blessing, and doing good to them. Even when they curse, hate, mistreat, or persecute us, we are to respond with kindness and prayer [3]. This is because we are called to be like God, who loves even those who are opposed to Him [7], and doing good to them can even change their hearts [7].",
+      "retrieved": [
+        "Proverbs 25:21",
+        "Psalms 139:22",
+        "Matthew 5:44",
+        "Psalms 25:19",
+        "Romans 12:20"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 13849,
+      "inputTokens": 2249,
+      "outputTokens": 377,
+      "costUsd": 0.00024024000000000002
+    },
+    {
+      "question": "What does the Bible say about peace?",
+      "answer": "The Bible presents peace as a gift from God, distinct from what the world offers. This peace isn’t merely an absence of conflict, but a tranquility of mind that arises from being right with God, as Christ leaves his peace with his disciples [3]. God actively preaches peace to those who are both near and far from Him [4], and desires us to actively seek and pursue it in all areas of our lives [5].",
+      "retrieved": [
+        "Romans 12:18",
+        "Romans 15:33",
+        "John 14:27",
+        "Ephesians 2:17",
+        "Psalms 34:14"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 18085,
+      "inputTokens": 1938,
+      "outputTokens": 416,
+      "costUsd": 0.00022159999999999997
+    },
+    {
+      "question": "How do I gain wisdom?",
+      "answer": "The Scriptures tell us that wisdom is supreme and worth pursuing even at great cost, as it is superior to possessions. We are encouraged to actively seek wisdom and understanding, even as a babe cries out for nourishment, and to lift our voice for understanding. Furthermore, wisdom strengthens us, protecting us and giving us spiritual life.",
+      "retrieved": [
+        "Job 28:20",
+        "Proverbs 4:7",
+        "Psalms 90:12",
+        "Job 28:12",
+        "Proverbs 1:2"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 3,
+      "latencyMs": 12677,
+      "inputTokens": 2207,
+      "outputTokens": 341,
+      "costUsd": 0.00023112
+    },
+    {
+      "question": "What does Scripture say about caring for the poor?",
+      "answer": "Scripture clearly calls for compassion and practical help for the poor. We are commanded to open our hands to those in need, and not to harden our hearts or shut our hands from them. Showing pity on the poor is even equated with lending to the Lord Himself, with the promise of reward.",
+      "retrieved": [
+        "Proverbs 22:22",
+        "Deuteronomy 15:11",
+        "Proverbs 19:17",
+        "Deuteronomy 15:7",
+        "Psalms 41:1"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 10673,
+      "inputTokens": 2267,
+      "outputTokens": 317,
+      "costUsd": 0.00023208000000000001
+    },
+    {
+      "question": "What does the Bible say about waiting and patience?",
+      "answer": "The Bible speaks to the importance of patience, especially when hoping for things not yet seen. We are encouraged to wait with patience, as illustrated by the farmer awaiting the fruit of the earth [3]. Even the Lord displays patience, desiring repentance for all rather than immediate judgment [5].",
+      "retrieved": [
+        "Romans 8:25",
+        "Job 6:11",
+        "James 5:7",
+        "James 5:8",
+        "2 Peter 3:9"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 8028,
+      "inputTokens": 2234,
+      "outputTokens": 235,
+      "costUsd": 0.00021632
+    },
+    {
+      "question": "How do I deal with doubt and unbelief?",
+      "answer": "It's natural to experience doubt and unbelief, even as a believer. Scripture acknowledges that even with some faith, unbelief can still be present and hinder what God can accomplish through us [6]. When facing doubt, it is right to cry out to God for help, acknowledging your weakness and asking for strength, as the father of the child did [2].",
+      "retrieved": [
+        "Matthew 13:58",
+        "Mark 9:24",
+        "Hebrews 3:19",
+        "John 9:36",
+        "Luke 24:38"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 8951,
+      "inputTokens": 2230,
+      "outputTokens": 254,
+      "costUsd": 0.00021904
+    },
+    {
+      "question": "What does Scripture say about anger?",
+      "answer": "Scripture acknowledges anger as a natural passion, but warns against its dangers. Proverbs 29:22 and Proverbs 15:18 both state that an angry man stirs up strife and contention, and even abounds in sin. However, Ephesians 4:26 allows for anger, but cautions not to sin in it and to resolve it quickly, before the day ends.",
+      "retrieved": [
+        "Ephesians 4:26",
+        "Proverbs 29:22",
+        "Ecclesiastes 7:9",
+        "James 1:20",
+        "Proverbs 15:18"
+      ],
+      "citedRefs": [
+        "Proverbs 29:22",
+        "Proverbs 15:18",
+        "Ephesians 4:26"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 11660,
+      "inputTokens": 2282,
+      "outputTokens": 263,
+      "costUsd": 0.00022464000000000002
+    },
+    {
+      "question": "What does the Bible say about death and eternal life?",
+      "answer": "The Bible teaches that sin results in death, but God offers eternal life as a gift through faith in Jesus Christ. This eternal life is a result of God’s grace and righteousness, and is found in knowing God and Jesus Christ, His Son. This gift of eternal life is promised to those who believe and is not limited by how long one lives on earth.",
+      "retrieved": [
+        "Romans 6:23",
+        "Romans 5:21",
+        "1 John 5:11",
+        "John 3:15",
+        "1 John 2:25"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 15140,
+      "inputTokens": 2197,
+      "outputTokens": 388,
+      "costUsd": 0.00023783999999999999
+    },
+    {
+      "question": "What does Scripture say about generosity and giving?",
+      "answer": "Scripture encourages generosity, connecting it with blessing and reward. Deuteronomy 16:17 states that we should give as we are able, according to the blessings God has given us, and Luke 6:38 promises that generous giving will be reciprocated with good measure. Proverbs 22:9 links a generous spirit to receiving blessing, and 2 Corinthians 9:11 highlights that generosity arises from being enriched by God and leads to thanksgiving.",
+      "retrieved": [
+        "Deuteronomy 16:17",
+        "Luke 6:38",
+        "Psalms 37:21",
+        "2 Corinthians 9:11",
+        "Proverbs 22:9"
+      ],
+      "citedRefs": [
+        "Deuteronomy 16:17",
+        "Luke 6:38",
+        "Proverbs 22:9",
+        "2 Corinthians 9:11"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 13863,
+      "inputTokens": 2269,
+      "outputTokens": 362,
+      "costUsd": 0.00023944
+    },
+    {
+      "question": "How do I resolve conflict with other people?",
+      "answer": "When conflict arises, it is important to seek reconciliation before continuing with worship or offerings, as highlighted in Matthew 5:24. Proverbs also emphasizes preventing strife, stating that it is best to stop contention before it escalates, like breaching a dam [2]. Additionally, Romans 12:18 encourages us to live peaceably with others, as much as it depends on us [3].",
+      "retrieved": [
+        "Matthew 5:24",
+        "Proverbs 17:14",
+        "Romans 12:18",
+        "Proverbs 3:30",
+        "Proverbs 25:9"
+      ],
+      "citedRefs": [
+        "Matthew 5:24",
+        "Romans 12:18"
+      ],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 11805,
+      "inputTokens": 2234,
+      "outputTokens": 292,
+      "costUsd": 0.00022543999999999998
+    },
+    {
+      "question": "What does the Bible say about trusting God?",
+      "answer": "The Bible consistently encourages trust in God, offering reassurance and a path to blessedness. When we are afraid, we are encouraged to put our trust in Him, and those who do trust in Him are blessed; trusting God means relying on Him with all your heart, rather than your own understanding. This trust is not simply a feeling, but a commitment to live a life dependent on His wisdom, goodness, power and promise.",
+      "retrieved": [
+        "Psalms 56:11",
+        "Psalms 56:3",
+        "Psalms 37:5",
+        "Psalms 84:12",
+        "Proverbs 3:5"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 13582,
+      "inputTokens": 1901,
+      "outputTokens": 346,
+      "costUsd": 0.00020744000000000003
+    },
+    {
+      "question": "How does Scripture describe God's love for us?",
+      "answer": "Scripture clearly states that God loves us, and importantly, He loved us *first*. This love isn’t based on anything we did, but originates in His own nature, for “God is love” [2]. He demonstrated this love by sending His Son as a sacrifice for our sins [5], even while we were undeserving and living in opposition to Him [6].",
+      "retrieved": [
+        "1 John 4:19",
+        "1 John 4:16",
+        "Ephesians 2:4",
+        "1 John 4:8",
+        "1 John 4:10"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 14391,
+      "inputTokens": 2298,
+      "outputTokens": 400,
+      "costUsd": 0.00024784
+    },
+    {
+      "question": "What does the Bible say about confession and repentance from sin?",
+      "answer": "Confession and repentance are closely linked to receiving mercy and experiencing God’s renewing work in our lives. Concealing sin hinders prosperity, but confessing and abandoning it leads to finding mercy [1]. Repentance involves turning from sin and returning to the Lord, and is essential for having sins blotted out and experiencing refreshment from God [2, 7].",
+      "retrieved": [
+        "Proverbs 28:13",
+        "Acts 3:19",
+        "Leviticus 5:5",
+        "Matthew 3:2",
+        "1 John 1:9"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 4,
+      "latencyMs": 11165,
+      "inputTokens": 2225,
+      "outputTokens": 331,
+      "costUsd": 0.00023096
+    },
+    {
+      "question": "What does Scripture say about fear?",
+      "answer": "Scripture acknowledges that fear is a common human experience, as seen in Psalms 55:5, which describes fearfulness and trembling overwhelming someone. However, it also offers encouragement not to be afraid, particularly of sudden fear or the wickedness of others, as stated in Proverbs 3:25. Ultimately, the Bible directs us to a different kind of fear—reverence and awe for God Himself, as Matthew Henry explains in his commentary on Psalms 76, noting that God *is* the fear and should be feared.",
+      "retrieved": [
+        "Isaiah 24:17",
+        "Psalms 55:5",
+        "Proverbs 3:25",
+        "Psalms 14:5",
+        "Acts 5:11"
+      ],
+      "citedRefs": [
+        "Psalms 55:5",
+        "Proverbs 3:25",
+        "Psalms 76"
+      ],
+      "faithful": false,
+      "qualityScore": 3,
+      "latencyMs": 12604,
+      "inputTokens": 2049,
+      "outputTokens": 322,
+      "costUsd": 0.00021544
+    },
+    {
+      "question": "What does the Bible say about joy?",
+      "answer": "The Bible consistently encourages rejoicing! We are told to “Rejoice in the Lord always” [3] and to “Always rejoice” [4]. This joy isn’t fleeting, but is connected to drawing from “the wells of salvation” [5] and is a response to God’s work in our lives, as seen in His bringing His people out with joy [2].",
+      "retrieved": [
+        "Luke 1:14",
+        "Psalms 105:43",
+        "Philippians 4:4",
+        "1 Thessalonians 5:16",
+        "Isaiah 12:3"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 10703,
+      "inputTokens": 2227,
+      "outputTokens": 292,
+      "costUsd": 0.00022488
+    },
+    {
+      "question": "What does Scripture say about marriage?",
+      "answer": "Scripture reveals that marriage is a sacred union ordained by God, where a man leaves his father and mother to be joined to his wife, and they become one flesh. This union is so significant that what God joins together, man should not tear apart. Marriage is to be honored, and the marital bed kept undefiled, as God will judge those who violate its sanctity.",
+      "retrieved": [
+        "Matthew 19:5",
+        "Matthew 19:6",
+        "1 Corinthians 7:4",
+        "Hebrews 13:4",
+        "Mark 10:8"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 10290,
+      "inputTokens": 2212,
+      "outputTokens": 278,
+      "costUsd": 0.00022144000000000002
+    },
+    {
+      "question": "How does God comfort those who are hurting?",
+      "answer": "God comforts people in their affliction, and through that comfort, He enables them to comfort others who are also hurting. Just as a mother comforts her child, God provides comfort, and He heals the brokenhearted and binds up wounds. He desires to comfort those who are cast down, and His undertaking to do so *is* comfort itself.",
+      "retrieved": [
+        "Isaiah 40:1",
+        "2 Corinthians 1:4",
+        "Isaiah 66:13",
+        "Psalms 147:3",
+        "Isaiah 57:18"
+      ],
+      "citedRefs": [],
+      "faithful": true,
+      "qualityScore": 5,
+      "latencyMs": 10771,
+      "inputTokens": 2263,
+      "outputTokens": 293,
+      "costUsd": 0.00022792
+    }
+  ]
+}
