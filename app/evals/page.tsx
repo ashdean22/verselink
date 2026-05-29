@@ -43,6 +43,9 @@ function loadRuns(): EvalRun[] {
     .readdirSync(dir)
     .filter(f => f.endsWith('.json'))
     .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')) as EvalRun)
+    // Only retrieval-eval files have a `questions` array + `tag`. Skip other JSON
+    // in this dir (e.g. generation bake-off files, which have a different shape).
+    .filter(run => Array.isArray(run.questions) && typeof run.tag === 'string')
     .sort((a, b) => (a.timestamp ?? '').localeCompare(b.timestamp ?? ''))
 }
 
