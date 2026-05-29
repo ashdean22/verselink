@@ -43,7 +43,7 @@ function loadRuns(): EvalRun[] {
     .readdirSync(dir)
     .filter(f => f.endsWith('.json'))
     .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')) as EvalRun)
-    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    .sort((a, b) => (a.timestamp ?? '').localeCompare(b.timestamp ?? ''))
 }
 
 function MetricCell({ value, baseline }: { value: number; baseline: number }) {
