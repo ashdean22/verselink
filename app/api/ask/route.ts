@@ -1,25 +1,20 @@
 /**
  * app/api/ask/route.ts — Hybrid RAG pipeline Route Handler
  *
- * Day 5 upgrade: retrieval now spans TWO corpora in parallel:
- *   • verses table  — 31,098 WEB Bible verses
- *   • chunks table  — Matthew Henry's Commentary (1708), ~500-token chunks
- *
- * RAG steps:
- *   1. RETRIEVE  — embed the question once, search both tables simultaneously
- *   2. AUGMENT   — build a prompt with labeled Scripture + Commentary sections
- *   3. GENERATE  — Claude answers using only what was retrieved; no hallucination
- *
- * WHY HYBRID RETRIEVAL:
- *   A verse alone ("Be anxious for nothing") tells you WHAT Scripture says.
- *   Commentary ("Henry explains that Paul's command implies prayer as the cure
- *   for worry") tells you WHY and HOW. The combination gives Claude richer
- *   grounding to write pastoral, useful answers.
+ * Generation dispatch (set via GENERATION_MODEL env var, or per-request `model`):
+ *   selfhost:*   → self-hosted fine-tune (plain text) + Claude fallback
+ *   claude-*     → Anthropic SDK (tool-use structured output)
+ *   deepinfra:*  → DeepInfra serverless
+ *   groq:*       → Groq
+ *   else         → OpenRouter
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { hybridSearch } from '@/lib/search'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60   // self-host generation can take >10s; needs Vercel Pro/Fluid
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -45,7 +40,7 @@ export interface RetrievedVerse {
 }
 
 export interface RetrievedChunk {
-  ref: string       // e.g. "Matthew Henry on Romans 8"
+  ref: string
   text: string
   similarity: number
 }
@@ -53,10 +48,9 @@ export interface RetrievedChunk {
 export async function POST(req: NextRequest) {
   let question: string
   let includeUsage = false
-  // generationModel: defaults to Claude; pass an OpenRouter model ID (e.g.
-  // "meta-llama/llama-3.3-70b-instruct") to swap only the generate step —
-  // retrieval, prompt, and schema stay identical (apples-to-apples bake-off).
-  let generationModel = 'claude-sonnet-4-6'
+  // Default model is controlled by the GENERATION_MODEL env var (the feature
+  // flag). A per-request `model` still overrides it (used by the benchmark).
+  let generationModel = process.env.GENERATION_MODEL || 'claude-sonnet-4-6'
   try {
     const body = await req.json()
     question = body.question?.trim()
@@ -84,7 +78,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Step 2: AUGMENT ──────────────────────────────────────────────────────────
-  // Label context clearly so Claude knows which source type each item came from.
   const scriptureContext = verses
     .map((v, i) => `[${i + 1}] ${v.book} ${v.chapter}:${v.verse} — "${v.text}"`)
     .join('\n')
@@ -112,17 +105,11 @@ ${scriptureContext}
 ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` : ''}`
 
   // ── Step 3: GENERATE ─────────────────────────────────────────────────────────
-  // Provider dispatch based on model prefix:
-  //   claude-*      → Anthropic SDK
-  //   deepinfra:*   → DeepInfra serverless (strip prefix, use DEEPINFRA_API_KEY)
-  //   groq:*        → Groq (strip prefix, use GROQ_API_KEY)
-  //   anything else → OpenRouter (pass model ID as-is, use OPENROUTER_API_KEY)
-  // All non-Claude paths share the same OpenAI-compatible fetch helper below.
   let parsed: { answer: string; citations: Citation[] }
   let inputTokens = 0
   let outputTokens = 0
 
-  // Shared tool schema in OpenAI format — identical for every non-Claude provider.
+  // Shared tool schema in OpenAI format — for the hosted OpenAI-compatible providers.
   const openAITools = [{
     type: 'function' as const,
     function: {
@@ -149,6 +136,30 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       },
     },
   }]
+
+  // Build citation cards for the self-host path, which returns prose (no tool JSON).
+  // We surface the retrieved passages the answer actually references; if none match
+  // by string, we fall back to the top retrieved verses so cards are never empty.
+  function buildCitations(answer: string): Citation[] {
+    const cites: Citation[] = []
+    for (const v of verses) {
+      const ref = `${v.book} ${v.chapter}:${v.verse}`
+      if (answer.includes(ref) || answer.includes(`${v.book} ${v.chapter}`)) {
+        cites.push({ ref, text: v.text, relevance: 'Referenced in the answer.' })
+      }
+    }
+    for (const c of chunks) {
+      if (answer.includes(`${c.book} ${c.chapter}`) || answer.toLowerCase().includes('henry')) {
+        cites.push({ ref: `Matthew Henry on ${c.book} ${c.chapter}`, text: c.text, relevance: 'Commentary context.' })
+      }
+    }
+    if (cites.length === 0) {
+      for (const v of verses.slice(0, 3)) {
+        cites.push({ ref: `${v.book} ${v.chapter}:${v.verse}`, text: v.text, relevance: 'Retrieved as relevant to your question.' })
+      }
+    }
+    return cites
+  }
 
   async function callOpenAICompatible(
     endpoint: string,
@@ -178,45 +189,94 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
     }
   }
 
-  try {
-    if (generationModel.startsWith('claude-')) {
-      const message = await anthropic.messages.create({
-        model: generationModel,
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: question }],
-        tools: [{
-          name: 'scripture_answer',
-          description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
-          input_schema: {
-            type: 'object' as const,
-            properties: {
-              answer:    { type: 'string', description: '2-4 sentence answer grounded only in the provided verses and commentary.' },
-              citations: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
-                    text:      { type: 'string', description: 'Exact text from the provided list.' },
-                    relevance: { type: 'string', description: 'One sentence on why this source applies.' },
-                  },
-                  required: ['ref', 'text', 'relevance'],
+  // Self-hosted fine-tune: plain text completion. Gemma 2 has no system role,
+  // so the prompt is folded into a single user turn (matches the eval format).
+  async function callSelfHostPlain(endpoint: string, apiKey: string, modelId: string) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 55000)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model:      modelId,
+          max_tokens: 1024,
+          messages:   [{ role: 'user', content: `${systemPrompt}\n\nQuestion: ${question}` }],
+        }),
+        signal: controller.signal,
+      })
+      if (!res.ok) throw new Error(`selfhost ${res.status}: ${await res.text()}`)
+      const data = await res.json()
+      const content: string = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('no content in self-host response')
+      return {
+        parsed:       { answer: content.trim(), citations: buildCitations(content) },
+        inputTokens:  0,
+        outputTokens: 0,
+      }
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  async function generateWithClaude(modelId: string) {
+    const message = await anthropic.messages.create({
+      model: modelId,
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: question }],
+      tools: [{
+        name: 'scripture_answer',
+        description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            answer:    { type: 'string', description: '2-4 sentence answer grounded only in the provided verses and commentary.' },
+            citations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
+                  text:      { type: 'string', description: 'Exact text from the provided list.' },
+                  relevance: { type: 'string', description: 'One sentence on why this source applies.' },
                 },
+                required: ['ref', 'text', 'relevance'],
               },
             },
-            required: ['answer', 'citations'],
           },
-        }],
-        tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
-      })
-      const toolBlock = message.content.find(b => b.type === 'tool_use') as
-        | { type: 'tool_use'; input: { answer: string; citations: Citation[] } }
-        | undefined
-      if (!toolBlock) throw new Error('no tool_use block in Claude response')
-      parsed       = toolBlock.input
-      inputTokens  = message.usage.input_tokens
-      outputTokens = message.usage.output_tokens
+          required: ['answer', 'citations'],
+        },
+      }],
+      tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
+    })
+    const toolBlock = message.content.find(b => b.type === 'tool_use') as
+      | { type: 'tool_use'; input: { answer: string; citations: Citation[] } }
+      | undefined
+    if (!toolBlock) throw new Error('no tool_use block in Claude response')
+    return {
+      parsed:       toolBlock.input,
+      inputTokens:  message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+    }
+  }
+
+  try {
+    if (generationModel.startsWith('selfhost:')) {
+      const modelId = generationModel.slice('selfhost:'.length)
+      try {
+        ;({ parsed, inputTokens, outputTokens } = await callSelfHostPlain(
+          process.env.SELFHOST_URL!,
+          process.env.SELFHOST_API_KEY!,
+          modelId,
+        ))
+      } catch (err) {
+        console.error('Self-host failed — falling back to Claude:', err)
+        ;({ parsed, inputTokens, outputTokens } = await generateWithClaude('claude-sonnet-4-6'))
+      }
+
+    } else if (generationModel.startsWith('claude-')) {
+      ;({ parsed, inputTokens, outputTokens } = await generateWithClaude(generationModel))
 
     } else if (generationModel.startsWith('deepinfra:')) {
       const modelId = generationModel.slice('deepinfra:'.length)
@@ -235,7 +295,6 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       ))
 
     } else {
-      // Default: OpenRouter — pass model ID as-is (e.g. "meta-llama/llama-3.3-70b-instruct")
       ;({ parsed, inputTokens, outputTokens } = await callOpenAICompatible(
         'https://openrouter.ai/api/v1/chat/completions',
         process.env.OPENROUTER_API_KEY!,
@@ -263,7 +322,6 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
     })),
   }
 
-  // Benchmark-only telemetry — included only when caller passes `includeUsage: true`
   if (includeUsage) {
     response.inputTokens = inputTokens
     response.outputTokens = outputTokens
