@@ -11,7 +11,8 @@
     "embed-bible": "npx tsx scripts/embed-bible.ts",
     "run-eval": "npx tsx scripts/run-eval.ts",
     "load-commentary": "npx tsx scripts/load-commentary.ts",
-    "embed-chunks": "npx tsx scripts/embed-chunks.ts"
+    "embed-chunks": "npx tsx scripts/embed-chunks.ts",
+    "load-translations": "npx tsx scripts/load-translations.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

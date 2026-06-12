@@ -10,24 +10,75 @@ const EXAMPLE_QUESTIONS = [
   "How does Scripture describe forgiveness?",
 ]
 
+const VERSIONS = ['WEB', 'KJV', 'ASV', 'BSB'] as const
+type Version = typeof VERSIONS[number]
+
+const LS_KEY = 'verselink:version'
+
+const VERSION_LABELS: Record<Version, string> = {
+  WEB: 'World English Bible',
+  KJV: 'King James Version',
+  ASV: 'American Standard Version',
+  BSB: 'Berean Standard Bible',
+}
+
 function isVerseCitation(ref: string) {
   // Commentary citations start with "Matthew Henry on…"
   return !ref.startsWith('Matthew Henry')
 }
 
-export default function AskBox() {
-  const [question, setQuestion] = useState('')
-  const [result, setResult] = useState<AskResponse | null>(null)
+// Parse "Book Name Chapter:Verse" → {book, chapter, verse}
+function parseRef(ref: string): { book: string; chapter: number; verse: number } | null {
+  const match = ref.match(/^(.+?)\s+(\d+):(\d+)$/)
+  if (!match) return null
+  return { book: match[1], chapter: parseInt(match[2], 10), verse: parseInt(match[3], 10) }
+}
 
-  // Pre-fill from ?q= param (used by topic page CTAs)
+export default function AskBox() {
+  const [question, setQuestion]           = useState('')
+  const [version, setVersion]             = useState<Version>('WEB')
+  const [result, setResult]               = useState<AskResponse | null>(null)
+  const [translatedTexts, setTranslated]  = useState<Record<string, string>>({})
+
+  // On mount: restore stored version + pre-fill ?q= param
   useEffect(() => {
+    const stored = localStorage.getItem(LS_KEY) as Version | null
+    if (stored && VERSIONS.includes(stored)) setVersion(stored)
     const q = new URLSearchParams(window.location.search).get('q')
     if (q) setQuestion(q)
   }, [])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState<string | null>(null)
   const [showContext, setShowContext] = useState(false)
-  const [elapsed, setElapsed] = useState<number | null>(null)
+  const [elapsed, setElapsed]     = useState<number | null>(null)
+
+  // Re-translate displayed verse text whenever the version or result changes.
+  // Retrieval stays on WEB; only the display layer swaps text here.
+  useEffect(() => {
+    if (!result || version === 'WEB') {
+      setTranslated({})
+      return
+    }
+
+    const refs = result.retrievedVerses
+      .map(v => parseRef(v.ref))
+      .filter((r): r is NonNullable<typeof r> => r !== null)
+
+    if (!refs.length) return
+
+    let cancelled = false
+    fetch('/api/verse-text', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ refs, version }),
+    })
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setTranslated(data.texts ?? {}) })
+      .catch(() => { if (!cancelled) setTranslated({}) })
+
+    return () => { cancelled = true }
+  }, [version, result])
 
   async function handleSubmit(q: string) {
     if (!q.trim()) return
@@ -35,14 +86,15 @@ export default function AskBox() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setTranslated({})
     setElapsed(null)
 
     const start = Date.now()
     try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
+      const res  = await fetch('/api/ask', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q }),
+        body:    JSON.stringify({ question: q }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Request failed')
@@ -59,6 +111,24 @@ export default function AskBox() {
 
   return (
     <div className="space-y-6">
+      {/* Version selector */}
+      <div className="flex items-center gap-2">
+        <label className="text-xs text-stone-500 shrink-0">Translation</label>
+        <select
+          value={version}
+          onChange={e => {
+            const v = e.target.value as Version
+            setVersion(v)
+            localStorage.setItem(LS_KEY, v)
+          }}
+          className="text-sm border border-stone-200 rounded-md px-2 py-1.5 bg-white text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+        >
+          {VERSIONS.map(v => (
+            <option key={v} value={v}>{v} — {VERSION_LABELS[v]}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Input */}
       <form
         onSubmit={(e) => { e.preventDefault(); handleSubmit(question) }}
@@ -131,20 +201,23 @@ export default function AskBox() {
               <p className="text-xs font-medium text-stone-400 uppercase tracking-wide">Citations</p>
               <div className="space-y-2">
                 {result.citations.map((c, i) => {
-                  const verse = isVerseCitation(c.ref)
+                  const verse    = isVerseCitation(c.ref)
                   const [book, chv] = verse ? c.ref.split(/(?<=\D)\s(?=\d)/) : [null, null]
-                  const chapter = chv?.split(':')[0]
-                  const slug = book?.toLowerCase().replace(/ /g, '-')
+                  const chapter  = chv?.split(':')[0]
+                  const slug     = book?.toLowerCase().replace(/ /g, '-')
+                  // Swap to selected version; fall back to WEB text if not found
+                  const displayText = verse ? (translatedTexts[c.ref] ?? c.text) : c.text
 
                   return (
                     <div key={i} className="rounded-lg border border-stone-200 bg-white p-4 space-y-1">
                       <div className="flex items-center gap-2">
                         {verse && slug && chapter ? (
                           <a
-                            href={`/bible/${slug}/${chapter}`}
+                            href={`/bible/${slug}/${chapter}?version=${version}`}
                             className="text-sm font-semibold text-stone-700 hover:underline"
                           >
                             {c.ref}
+                            <span className="font-normal text-stone-400"> · {version}</span>
                           </a>
                         ) : (
                           <span className="text-sm font-semibold text-indigo-700">{c.ref}</span>
@@ -155,7 +228,7 @@ export default function AskBox() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-stone-700 italic">"{c.text}"</p>
+                      <p className="text-sm text-stone-700 italic">&quot;{displayText}&quot;</p>
                       <p className="text-xs text-stone-500">{c.relevance}</p>
                     </div>
                   )
@@ -182,7 +255,12 @@ export default function AskBox() {
                         <li key={i} className="flex gap-3 text-xs text-stone-500">
                           <span className="shrink-0 font-mono w-8">{(v.similarity * 100).toFixed(0)}%</span>
                           <span>
-                            <span className="font-semibold text-stone-700">{v.ref}</span> — {v.text}
+                            <span className="font-semibold text-stone-700">
+                              {v.ref}
+                              <span className="font-normal text-stone-400"> · {version}</span>
+                            </span>
+                            {' — '}
+                            {translatedTexts[v.ref] ?? v.text}
                           </span>
                         </li>
                       ))}
