@@ -69,11 +69,39 @@ interface TranslationRow {
 // We extract the text value from both; objects without a `text` field (lineBreak, noteId) are skipped.
 type ContentItem = string | Record<string, unknown>
 
+// The API uses two content encodings that must be distinguished:
+//
+//   Format A — prose books (KJV John 1, ASV Isaiah 40):
+//     content: ["In the beginning was the Word..."]
+//     Plain strings ARE the verse text.
+//
+//   Format B — poetry / newer encoding (KJV/BSB Psalm 119, Lamentations):
+//     content: [{"text": "...", "poem": 1}, {"lineBreak": true}, {"noteId": 0}]
+//     Text lives in objects; lineBreak/noteId objects are skipped.
+//
+//   Mixed — ASV Psalm 119 acrostic boundaries only:
+//     content: [{"text":"I will observe thy statutes:","poem":1}, "ב BETH."]
+//     The verse has object-format text AND a trailing plain string that is the
+//     Hebrew section heading for the next strophe — NOT part of the verse text.
+//
+// Discriminator: if ANY item is a {text: "..."} object, we are in Format B/Mixed.
+// In that case, plain strings are editorial markers (acrostic letters, section
+// labels) and must be skipped.  Only extract text from {text} objects.
+// If NO {text} object is present, the content is Format A: use plain strings.
 function extractVerseText(content: ContentItem[]): string {
+  const hasTextObjects = content.some(
+    item => typeof item === 'object' && item !== null && typeof item['text'] === 'string'
+  )
   return content
     .flatMap(item => {
-      if (typeof item === 'string') return [item]
-      if (item !== null && typeof item === 'object' && typeof item['text'] === 'string') return [item['text'] as string]
+      if (typeof item === 'string') {
+        // Format A: include.  Format B/Mixed: this is an acrostic/heading marker, skip.
+        return hasTextObjects ? [] : [item]
+      }
+      if (item !== null && typeof item === 'object' && typeof item['text'] === 'string') {
+        return [item['text'] as string]
+      }
+      // {lineBreak: true}, {noteId: N}, etc. — skip
       return []
     })
     .join(' ')

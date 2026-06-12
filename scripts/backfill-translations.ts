@@ -64,14 +64,21 @@ interface TranslationRow {
   book: string; chapter: number; verse: number; version: string; text: string
 }
 
-// Handles both plain-string and { text: "..." } object content items.
 type ContentItem = string | Record<string, unknown>
 
+// See load-translations.ts for full explanation of the three content formats.
+// Discriminator: if ANY {text:"..."} object is present, plain strings in the same
+// content array are acrostic/heading markers — skip them.
 function extractVerseText(content: ContentItem[]): string {
+  const hasTextObjects = content.some(
+    item => typeof item === 'object' && item !== null && typeof item['text'] === 'string'
+  )
   return content
     .flatMap(item => {
-      if (typeof item === 'string') return [item]
-      if (item !== null && typeof item === 'object' && typeof item['text'] === 'string') return [item['text'] as string]
+      if (typeof item === 'string') return hasTextObjects ? [] : [item]
+      if (item !== null && typeof item === 'object' && typeof item['text'] === 'string') {
+        return [item['text'] as string]
+      }
       return []
     })
     .join(' ')
