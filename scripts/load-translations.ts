@@ -7,6 +7,13 @@
  *   ASV → fetched from bible.helloao.org  (translation id: eng_asv)
  *   BSB → fetched from bible.helloao.org  (translation id: BSB)
  *
+ * Content-format fix:
+ *   The API returns verse content items in two encodings:
+ *     1. Plain string: "In the beginning was the Word..."
+ *     2. Object with text field: { "text": "...", "poem": 1 } or { "text": "...", "wordsOfJesus": true }
+ *   Both are now extracted. The original parser only handled (1), silently dropping
+ *   all poetry books and Words of Jesus for every remote translation.
+ *
  * Checkpoint / resume:
  *   On startup we read all existing (version, book, chapter) triples from
  *   verse_translations into a Set.  Each chapter is inserted as a single
@@ -36,7 +43,8 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 // Each upsert call sends at most BATCH_SIZE rows.  We never split a chapter
 // across two calls so that partial-chapter state is impossible.
 const BATCH_SIZE     = 1000
-const FETCH_SLEEP_MS = 100   // polite delay between requests to HelloAO
+const FETCH_SLEEP_MS = 300   // polite delay between API requests; 100ms was too fast
+const MAX_RETRIES    = 4     // exponential backoff: 1s → 2s → 4s → 8s
 const API_BASE       = 'https://bible.helloao.org/api'
 
 const REMOTE_TRANSLATIONS = [
@@ -55,31 +63,47 @@ interface TranslationRow {
   text:    string
 }
 
-// Each verse's `content` array mixes plain strings with footnote objects like
-// { noteId: 0 }.  We keep only the strings so the stored text is clean prose.
-type ContentItem = string | { noteId: number }
-
-interface ApiChapterItem {
-  type:     string
-  number?:  number
-  content?: ContentItem[]
-}
-
-interface ApiBooksResponse {
-  books: Array<{ id: string; name: string; numberOfChapters: number }>
-}
-
-interface ApiChapterResponse {
-  book:    { id: string; name: string }
-  chapter: { number: number; content: ApiChapterItem[] }
-}
+// The API uses two content-item encodings:
+//   1. Plain string  — "In the beginning was the Word..."
+//   2. Object        — { text: "...", poem?: number, wordsOfJesus?: boolean, lineBreak?: boolean, noteId?: number }
+// We extract the text value from both; objects without a `text` field (lineBreak, noteId) are skipped.
+type ContentItem = string | Record<string, unknown>
 
 function extractVerseText(content: ContentItem[]): string {
   return content
-    .filter((item): item is string => typeof item === 'string')
+    .flatMap(item => {
+      if (typeof item === 'string') return [item]
+      if (item !== null && typeof item === 'object' && typeof item['text'] === 'string') return [item['text'] as string]
+      return []
+    })
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+// Fetch a URL with up to MAX_RETRIES retries on non-200 / network errors,
+// using exponential backoff starting at 1s.  404 is returned as-is (not retried).
+async function fetchWithRetry(url: string): Promise<Response> {
+  let delay = 1000
+  let lastRes: Response | null = null
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url)
+      if (res.ok || res.status === 404) return res
+      lastRes = res
+      if (attempt < MAX_RETRIES) {
+        process.stdout.write(` [HTTP ${res.status} retry ${attempt}/${MAX_RETRIES - 1}]`)
+        await sleep(delay)
+        delay = Math.min(delay * 2, 16000)
+      }
+    } catch (err) {
+      if (attempt === MAX_RETRIES) throw err
+      process.stdout.write(` [net-err retry ${attempt}/${MAX_RETRIES - 1}]`)
+      await sleep(delay)
+      delay = Math.min(delay * 2, 16000)
+    }
+  }
+  return lastRes!
 }
 
 // Upsert a batch into verse_translations.  ON CONFLICT DO NOTHING means the
@@ -191,7 +215,7 @@ async function loadWEB(checkpoint: Set<string>): Promise<number> {
   const batcher = new Batcher()
   let skipped = 0
 
-  for (const rows of chapterMap.values()) {
+  for (const rows of Array.from(chapterMap.values())) {
     const { book, chapter } = rows[0]
     const cpKey = `WEB:${book}:${chapter}`
     if (checkpoint.has(cpKey)) { skipped++; continue }
@@ -204,13 +228,28 @@ async function loadWEB(checkpoint: Set<string>): Promise<number> {
 }
 
 // ── Remote translations ──────────────────────────────────────────────────────
+interface ApiBooksResponse {
+  books: Array<{ id: string; name: string; numberOfChapters: number }>
+}
+
+interface ApiChapterItem {
+  type:     string
+  number?:  number
+  content?: ContentItem[]
+}
+
+interface ApiChapterResponse {
+  book:    { id: string; name: string }
+  chapter: { number: number; content: ApiChapterItem[] }
+}
+
 async function loadRemote(
   translation: typeof REMOTE_TRANSLATIONS[number],
   checkpoint: Set<string>,
 ): Promise<number> {
   console.log(`\n[${translation.label}] Fetching from API (id: ${translation.apiId})…`)
 
-  const booksRes = await fetch(`${API_BASE}/${translation.apiId}/books.json`)
+  const booksRes = await fetchWithRetry(`${API_BASE}/${translation.apiId}/books.json`)
   if (!booksRes.ok) {
     throw new Error(`books.json fetch failed for ${translation.apiId}: ${booksRes.status}`)
   }
@@ -231,7 +270,7 @@ async function loadRemote(
       await sleep(FETCH_SLEEP_MS)
 
       const url = `${API_BASE}/${translation.apiId}/${book.id}/${ch}.json`
-      const res = await fetch(url)
+      const res = await fetchWithRetry(url)
 
       if (!res.ok) {
         process.stdout.write(` [skip ch${ch}: ${res.status}]`)
@@ -262,6 +301,11 @@ async function loadRemote(
         })
       }
 
+      if (chapterRows.length === 0) {
+        process.stdout.write(` [0 verses ch${ch}]`)
+        continue
+      }
+
       await batcher.addChapter(chapterRows)
       bookVerses  += chapterRows.length
       totalVerse  += chapterRows.length
@@ -288,7 +332,7 @@ async function main() {
   }
 
   console.log(`\n${'='.repeat(50)}`)
-  console.log(`Total rows inserted: ${grand}`)
+  console.log(`Total rows inserted this run: ${grand}`)
   console.log('='.repeat(50))
   console.log()
 }
