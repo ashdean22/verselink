@@ -1,4 +1,5 @@
 import CallNowButton from './CallNowButton'
+import DevotionalSignup from './DevotionalSignup'
 
 export default function Home() {
   return (
@@ -34,6 +35,7 @@ export default function Home() {
           <p className="text-sm text-stone-500">Anxiety, grief, forgiveness, hope — 50 topics with curated Scripture and commentary.</p>
         </a>
         <CallNowButton />
+        <DevotionalSignup />
       </div>
 
       <p className="text-xs text-stone-400">

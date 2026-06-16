@@ -1,20 +1,9 @@
 'use client'
 
 import { useState, useEffect, useId } from 'react'
+import { normalizePhone, E164_RE } from '@/lib/phone'
 
-const E164_RE = /^\+[1-9]\d{6,14}$/
 const LS_KEY = 'verselink_phone'
-
-function normalizePhone(raw: string): string {
-  const trimmed = raw.trim()
-  const hasPlus = trimmed.startsWith('+')
-  const digits = trimmed.replace(/\D/g, '')
-
-  if (digits.length === 10) return '+1' + digits
-  if (digits.length === 11 && digits[0] === '1') return '+' + digits
-  if (hasPlus || digits.length > 11) return '+' + digits
-  return digits
-}
 
 export default function CallNowButton() {
   const inputId = useId()

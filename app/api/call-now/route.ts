@@ -7,44 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase'
-
-const PER_NUMBER_CAP = 5
-const GLOBAL_CAP = 50
-const E164_RE = /^\+[1-9]\d{6,14}$/
-
-function startOfToday(): string {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
-}
-
-async function getGlobalCount(): Promise<number> {
-  const supabase = createServiceClient()
-  const { count, error } = await supabase
-    .from('calls_log')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', startOfToday())
-  if (error) throw new Error(`Global cap check failed: ${error.message}`)
-  return count ?? 0
-}
-
-async function getPerNumberCount(phoneNumber: string): Promise<number> {
-  const supabase = createServiceClient()
-  const { count, error } = await supabase
-    .from('calls_log')
-    .select('*', { count: 'exact', head: true })
-    .eq('phone_number', phoneNumber)
-    .gte('created_at', startOfToday())
-  if (error) throw new Error(`Per-number cap check failed: ${error.message}`)
-  return count ?? 0
-}
-
-async function logCall(phoneNumber: string) {
-  const supabase = createServiceClient()
-  const { error } = await supabase.from('calls_log').insert([{ phone_number: phoneNumber }])
-  if (error) throw new Error(`Log insert failed: ${error.message}`)
-}
+import { E164_RE } from '@/lib/phone'
+import { checkCallCaps, logCall } from '@/lib/callLimits'
 
 export async function POST(req: NextRequest) {
   const vapiKey       = process.env.VAPI_PRIVATE_KEY
@@ -74,20 +38,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const globalCount = await getGlobalCount()
-    if (globalCount >= GLOBAL_CAP) {
-      return NextResponse.json(
-        { error: 'Voice mode at capacity today — try tomorrow.' },
-        { status: 429 }
-      )
-    }
-
-    const perNumberCount = await getPerNumberCount(phoneNumber)
-    if (perNumberCount >= PER_NUMBER_CAP) {
-      return NextResponse.json(
-        { error: `Daily limit reached (${PER_NUMBER_CAP} calls/day per number). Try again tomorrow.` },
-        { status: 429 }
-      )
+    const caps = await checkCallCaps(phoneNumber)
+    if (!caps.ok) {
+      return NextResponse.json({ error: caps.error }, { status: caps.status })
     }
   } catch (err) {
     console.error(err)
