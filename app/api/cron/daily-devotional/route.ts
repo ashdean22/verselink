@@ -25,12 +25,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  // Only verified + active subscribers. Unverified numbers are NEVER called.
+  // Every active subscriber gets a call.
   const supabase = createServiceClient()
   const { data: subscribers, error } = await supabase
     .from('devotional_subscribers')
     .select('phone')
-    .eq('verified', true)
     .eq('active', true)
 
   if (error) {
