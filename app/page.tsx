@@ -18,7 +18,7 @@ export default function Home() {
           className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm hover:border-stone-400 transition-colors"
         >
           <h2 className="text-lg font-bold mb-1">Ask Scripture</h2>
-          <p className="text-sm text-stone-500">Ask any question. Get grounded answers with verse citations and Matthew Henry's commentary.</p>
+          <p className="text-sm text-stone-500">Ask any question. Get grounded answers with verse citations and commentary across traditions.</p>
         </a>
         <a
           href="/bible"
@@ -40,7 +40,7 @@ export default function Home() {
 
       <p className="text-xs text-stone-400">
         Scripture from the World English Bible (WEB) — public domain.
-        Commentary by Matthew Henry (1708) — public domain.
+        Commentary from Henry, Calvin, Gill, Clarke, Jamieson-Fausset-Brown & Haydock — public domain.
       </p>
     </div>
   )

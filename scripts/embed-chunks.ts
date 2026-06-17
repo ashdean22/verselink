@@ -19,11 +19,15 @@ const GEMINI_API_KEY   = process.env.GEMINI_API_KEY!
 const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const BATCH_FETCH              = 200
-const SLEEP_MS                 = 120
+const BATCH_FETCH              = 300
 const LOG_EVERY                = 100
 const MAX_RETRIES              = 5
-const CIRCUIT_BREAK_THRESHOLD  = 10
+// CONCURRENCY (key concept): the bottleneck is network round-trips to the Gemini
+// embedding API (~300-400ms each), not CPU. Running them one-at-a-time wastes that
+// wait. We fire CONCURRENCY requests in flight at once via a worker pool, which
+// cuts a 60k-chunk run from hours to ~30 min. Kept modest to stay under the
+// embedding RPM limit; embedWithRetry backs off on any 429s.
+const CONCURRENCY             = 12
 
 if (!GEMINI_API_KEY || !SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required env vars — check .env.local')
@@ -69,60 +73,110 @@ async function main() {
     return
   }
 
-  console.log(`\nEmbedding ${totalNull} commentary chunks — Matthew Henry`)
-  console.log(`Model: gemini-embedding-001 | Dims: 768 | Sleep: ${SLEEP_MS}ms\n`)
+  const total = totalNull   // non-null after the guard above; stable inside closures
+
+  console.log(`\nEmbedding ${total} commentary chunks (all sources missing an embedding)`)
+  console.log(`Model: gemini-embedding-001 | Dims: 768 | Concurrency: ${CONCURRENCY}\n`)
 
   let totalDone   = 0
   let errors      = 0
-  let consecutive = 0
+
+  // Fetch the next batch of un-embedded chunks, retrying transient network
+  // failures (Supabase/undici can throw "TypeError: terminated" on a blip).
+  // Over a 60k-row run these are common; a single blip must NOT kill the job.
+  async function fetchBatchWithRetry(): Promise<Array<{ id: number; text: string }> | null> {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from('chunks')
+          .select('id, text')
+          .is('embedding', null)
+          .order('id', { ascending: true })
+          .limit(BATCH_FETCH)
+        if (error) throw new Error(error.message)
+        return (data ?? []) as Array<{ id: number; text: string }>
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        process.stdout.write(`\n  [fetch retry ${attempt}/${MAX_RETRIES}] ${msg}`)
+        if (attempt === MAX_RETRIES) return null
+        await sleep(Math.pow(2, attempt) * 1000)
+      }
+    }
+    return null
+  }
+
+  // Write one embedding, retrying transient network failures so a blip leaves the
+  // chunk NULL (picked up next loop) rather than crashing the run.
+  async function writeEmbedding(id: number, vector: number[]): Promise<boolean> {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await supabase
+          .from('chunks')
+          .update({ embedding: JSON.stringify(vector) })
+          .eq('id', id)
+        if (error) throw new Error(error.message)
+        return true
+      } catch (err) {
+        if (attempt === MAX_RETRIES) {
+          const msg = err instanceof Error ? err.message : String(err)
+          process.stdout.write(`\n  [SKIP write] chunk ${id}: ${msg}`)
+          return false
+        }
+        await sleep(Math.pow(2, attempt) * 1000)
+      }
+    }
+    return false
+  }
+
+  let stallBatches = 0   // consecutive batches that embedded nothing new
 
   while (true) {
-    const { data: chunks, error: fetchErr } = await supabase
-      .from('chunks')
-      .select('id, text')
-      .is('embedding', null)
-      .order('id', { ascending: true })
-      .limit(BATCH_FETCH)
+    const chunks = await fetchBatchWithRetry()
+    if (chunks === null) {
+      console.error('\nBatch fetch failed after retries — pausing 60s then continuing.')
+      await sleep(60 * 1000)
+      continue
+    }
+    if (chunks.length === 0) break
 
-    if (fetchErr) { console.error('Fetch error:', fetchErr.message); process.exit(1) }
-    if (!chunks || chunks.length === 0) break
+    // If a batch embeds nothing, the same NULL rows will be re-fetched forever.
+    // Bail after two such batches so a permanently-bad chunk can't hang the run.
+    const doneBefore = totalDone
 
-    for (const chunk of chunks) {
-      const vector = await embedWithRetry(chunk.text)
-
-      if (!vector) {
-        errors++
-        consecutive++
-        process.stdout.write(`\n  [SKIP] chunk ${chunk.id} failed after ${MAX_RETRIES} retries`)
-
-        if (consecutive >= CIRCUIT_BREAK_THRESHOLD) {
-          console.log(`\n  Circuit breaker tripped. Pausing 2 min…`)
-          await sleep(2 * 60 * 1000)
-          consecutive = 0
+    // Worker pool: CONCURRENCY workers pull from a shared cursor over the batch,
+    // each embedding + writing one chunk at a time. No fixed sleep — throughput
+    // comes from parallelism, and embedWithRetry handles any rate-limit backoff.
+    const items = chunks   // non-null array; stable inside the worker closure
+    let cursor = 0
+    async function worker() {
+      while (cursor < items.length) {
+        const chunk = items[cursor++]
+        const vector = await embedWithRetry(chunk.text)
+        if (!vector) {
+          errors++
+          process.stdout.write(`\n  [SKIP] chunk ${chunk.id} failed after ${MAX_RETRIES} retries`)
+          continue
         }
-        continue
+        const wrote = await writeEmbedding(chunk.id, vector)
+        if (!wrote) { errors++; continue }
+
+        totalDone++
+        if (totalDone % LOG_EVERY === 0) {
+          const pct = Math.round((totalDone / total) * 100)
+          process.stdout.write(`\r  Embedded ${totalDone}/${total} (${pct}%) | skipped: ${errors}   `)
+        }
       }
+    }
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 
-      consecutive = 0
-
-      const { error: updateErr } = await supabase
-        .from('chunks')
-        .update({ embedding: JSON.stringify(vector) })
-        .eq('id', chunk.id)
-
-      if (updateErr) {
-        console.error(`\n  DB write failed for chunk ${chunk.id}: ${updateErr.message}`)
-        errors++
-        continue
+    if (totalDone === doneBefore) {
+      stallBatches++
+      if (stallBatches >= 2) {
+        console.error(`\nNo progress across ${stallBatches} batches — ${chunks.length} chunks keep failing. Stopping.`)
+        break
       }
-
-      totalDone++
-      if (totalDone % LOG_EVERY === 0) {
-        const pct = Math.round((totalDone / totalNull) * 100)
-        process.stdout.write(`\r  Embedded ${totalDone}/${totalNull} (${pct}%) | skipped: ${errors}   `)
-      }
-
-      await sleep(SLEEP_MS)
+    } else {
+      stallBatches = 0
     }
   }
 

@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { hybridSearch } from '@/lib/search'
+import { traditionLabel } from '@/lib/commentary'
 import { createClient } from '@supabase/supabase-js'
 import type { SearchResult, ChunkResult } from '@/types'
 
@@ -34,11 +35,13 @@ function formatSearchResult(verses: SearchResult[], chunks: ChunkResult[]): stri
   }
 
   if (chunks.length > 0) {
-    lines.push('\nMatthew Henry notes:')
-    chunks.slice(0, 2).forEach(c => {
+    lines.push('\nCommentary notes (across traditions):')
+    chunks.slice(0, 3).forEach(c => {
       // Trim to ~200 chars — enough for context without overwhelming the LLM
       const snippet = c.text.length > 200 ? c.text.slice(0, 200) + '…' : c.text
-      lines.push(`• ${c.book} ${c.chapter}: ${snippet}`)
+      const src = c.tradition ? `${c.doc_title} (${traditionLabel(c.tradition)})` : c.doc_title
+      const loc = c.book ? ` on ${c.book} ${c.chapter}` : ''
+      lines.push(`• ${src}${loc}: ${snippet}`)
     })
   }
 
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
           const query = args.query?.trim()
           if (!query) return { toolCallId: tc.id, result: 'No query provided.' }
 
-          const { verses, chunks } = await hybridSearch(query, 5, 2)
+          const { verses, chunks } = await hybridSearch(query, 5, 3, 1)
           return { toolCallId: tc.id, result: formatSearchResult(verses, chunks) }
         } catch (err) {
           console.error('searchScripture error:', err)

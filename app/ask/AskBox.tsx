@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { AskResponse } from '@/app/api/ask/route'
+import { isVerseCitation } from '@/lib/commentary'
 
 const EXAMPLE_QUESTIONS = [
   "What does Scripture say about anxiety?",
@@ -20,11 +21,6 @@ const VERSION_LABELS: Record<Version, string> = {
   KJV: 'King James Version',
   ASV: 'American Standard Version',
   BSB: 'Berean Standard Bible',
-}
-
-function isVerseCitation(ref: string) {
-  // Commentary citations start with "Matthew Henry on…"
-  return !ref.startsWith('Matthew Henry')
 }
 
 // Parse "Book Name Chapter:Verse" → {book, chapter, verse}
@@ -227,6 +223,11 @@ export default function AskBox() {
                             commentary
                           </span>
                         )}
+                        {!verse && c.tradition && (
+                          <span className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">
+                            {c.tradition}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-stone-700 italic">&quot;{displayText}&quot;</p>
                       <p className="text-xs text-stone-500">{c.relevance}</p>
@@ -269,13 +270,18 @@ export default function AskBox() {
                 )}
                 {(result.retrievedChunks?.length ?? 0) > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-stone-400 mb-2">Commentary (Matthew Henry)</p>
+                    <p className="text-xs font-semibold text-stone-400 mb-2">Commentary (across traditions)</p>
                     <ol className="space-y-3">
                       {result.retrievedChunks.map((c, i) => (
                         <li key={i} className="flex gap-3 text-xs text-stone-500">
                           <span className="shrink-0 font-mono w-8">{(c.similarity * 100).toFixed(0)}%</span>
                           <span>
                             <span className="font-semibold text-indigo-700">{c.ref}</span>
+                            {c.tradition && (
+                              <span className="ml-1.5 text-xs bg-amber-50 text-amber-700 px-1 py-0.5 rounded">
+                                {c.tradition}
+                              </span>
+                            )}
                             <span className="block mt-0.5 text-stone-400 line-clamp-3">{c.text}</span>
                           </span>
                         </li>

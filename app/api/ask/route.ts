@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { hybridSearch } from '@/lib/search'
+import { buildSystemPrompt, SCRIPTURE_ANSWER_TOOL } from '@/lib/rag'
+import { traditionLabel, chunkRef } from '@/lib/commentary'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60   // self-host generation can take >10s; needs Vercel Pro/Fluid
@@ -31,6 +33,7 @@ export interface Citation {
   ref: string
   text: string
   relevance: string
+  tradition?: string
 }
 
 export interface RetrievedVerse {
@@ -43,6 +46,8 @@ export interface RetrievedChunk {
   ref: string
   text: string
   similarity: number
+  source: string       // doc_title, e.g. "John Calvin"
+  tradition: string    // display label, e.g. "Reformed"
 }
 
 export async function POST(req: NextRequest) {
@@ -65,7 +70,7 @@ export async function POST(req: NextRequest) {
   let verses: Awaited<ReturnType<typeof hybridSearch>>['verses']
   let chunks: Awaited<ReturnType<typeof hybridSearch>>['chunks']
   try {
-    const result = await hybridSearch(question, 5, 3)
+    const result = await hybridSearch(question, 5, 6, 2)
     verses = result.verses
     chunks = result.chunks
   } catch (err) {
@@ -78,31 +83,9 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Step 2: AUGMENT ──────────────────────────────────────────────────────────
-  const scriptureContext = verses
-    .map((v, i) => `[${i + 1}] ${v.book} ${v.chapter}:${v.verse} — "${v.text}"`)
-    .join('\n')
-
-  const commentaryContext = chunks
-    .map((c, i) => {
-      const label = i + verses.length + 1
-      return `[${label}] Matthew Henry on ${c.book} ${c.chapter} — "${c.text}"`
-    })
-    .join('\n\n')
-
-  const hasCommentary = chunks.length > 0
-
-  const systemPrompt = `You are a Bible study assistant. Answer questions using ONLY the Scripture verses and commentary excerpts provided below. Do not use any Bible knowledge or theological knowledge outside what is given.
-
-Rules:
-1. Only cite verses and commentary from the provided lists. Never invent references.
-2. If the provided material does not adequately address the question, say so honestly.
-3. Every claim must be tied to a specific item from the lists.
-4. Be warm, pastoral, and clear — you are helping someone study Scripture.
-5. When commentary is available, use it to explain context or application — but Scripture takes priority.
-
-SCRIPTURE VERSES:
-${scriptureContext}
-${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` : ''}`
+  // Shared builder (lib/rag.ts): core-doctrines guardrail + tradition-labelled
+  // commentary + side-by-side instruction. Same prompt for every backend below.
+  const systemPrompt = buildSystemPrompt(verses, chunks)
 
   // ── Step 3: GENERATE ─────────────────────────────────────────────────────────
   let parsed: { answer: string; citations: Citation[] }
@@ -124,9 +107,10 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
             items: {
               type: 'object',
               properties: {
-                ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
+                ref:       { type: 'string', description: 'e.g. "Philippians 4:6" for Scripture, or "John Calvin on Romans 8" for commentary.' },
                 text:      { type: 'string', description: 'Exact text from the provided list.' },
                 relevance: { type: 'string', description: 'One sentence on why this source applies.' },
+                tradition: { type: 'string', description: 'For commentary citations only: the tradition label (Reformed, Arminian, Evangelical, Puritan, Catholic).' },
               },
               required: ['ref', 'text', 'relevance'],
             },
@@ -149,8 +133,13 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       }
     }
     for (const c of chunks) {
-      if (answer.includes(`${c.book} ${c.chapter}`) || answer.toLowerCase().includes('henry')) {
-        cites.push({ ref: `Matthew Henry on ${c.book} ${c.chapter}`, text: c.text, relevance: 'Commentary context.' })
+      if (answer.includes(`${c.book} ${c.chapter}`) || answer.includes(c.doc_title)) {
+        cites.push({
+          ref: chunkRef(c),
+          text: c.text,
+          relevance: 'Commentary context.',
+          tradition: traditionLabel(c.tradition),
+        })
       }
     }
     if (cites.length === 0) {
@@ -225,29 +214,7 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: question }],
-      tools: [{
-        name: 'scripture_answer',
-        description: 'Return a grounded Bible study answer with citations from Scripture and/or commentary.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            answer:    { type: 'string', description: '2-4 sentence answer grounded only in the provided verses and commentary.' },
-            citations: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  ref:       { type: 'string', description: 'e.g. "Philippians 4:6" or "Matthew Henry on Philippians 4"' },
-                  text:      { type: 'string', description: 'Exact text from the provided list.' },
-                  relevance: { type: 'string', description: 'One sentence on why this source applies.' },
-                },
-                required: ['ref', 'text', 'relevance'],
-              },
-            },
-          },
-          required: ['answer', 'citations'],
-        },
-      }],
+      tools: [SCRIPTURE_ANSWER_TOOL],
       tool_choice: { type: 'tool' as const, name: 'scripture_answer' },
     })
     const toolBlock = message.content.find(b => b.type === 'tool_use') as
@@ -316,9 +283,11 @@ ${hasCommentary ? `\nMATTHEW HENRY COMMENTARY EXCERPTS:\n${commentaryContext}` :
       similarity: v.similarity,
     })),
     retrievedChunks: chunks.map(c => ({
-      ref:        `Matthew Henry on ${c.book} ${c.chapter}`,
+      ref:        chunkRef(c),
       text:       c.text,
       similarity: c.similarity,
+      source:     c.doc_title,
+      tradition:  traditionLabel(c.tradition),
     })),
   }
 
