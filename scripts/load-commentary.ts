@@ -1,50 +1,33 @@
 /**
  * scripts/load-commentary.ts
- * Fetches Matthew Henry's Commentary (1708, public domain) from the HelloAO
- * Bible API and loads chunked text into the `chunks` Supabase table.
+ * Loads a public-domain commentary from the HelloAO Bible API into the `chunks`
+ * table, tagged with its doc_title + tradition. One source per run.
  *
  * SOURCE: https://bible.helloao.org — free, public domain, no API key needed.
  *
- * CHUNKING STRATEGY (key concept):
- *   We can't embed an entire commentary chapter (thousands of words) as one
- *   vector — the embedding would average out too much meaning. Instead we split
- *   each chapter into overlapping windows:
+ * Usage:
+ *   npm run load-commentary -- <key>
+ *   where <key> ∈ matthew-henry | john-gill | adam-clarke | jamieson-fausset-brown
  *
- *     |<-- 375 words -->|
- *                    |<-- 375 words -->|
- *     stride: 338 words (375 - 37 overlap)
+ * Calvin (Reformed) and Haydock (Catholic) are NOT on HelloAO — they have their
+ * own scrapers: scripts/load-calvin.ts and scripts/load-haydock.ts.
  *
- *   The 37-word overlap ensures that sentences near a chunk boundary are
- *   represented in BOTH the preceding and following chunks. A query whose
- *   answer straddles two chunks still finds it.
- *
- *   Token approximation: English prose ≈ 0.75 words/token, so
- *   375 words ≈ 500 tokens, 37 words ≈ 50 tokens.
- *
- * Run: npm run load-commentary
+ * Run: npm run load-commentary -- john-gill
  */
 
-import * as dotenv from 'dotenv'
-import { createClient } from '@supabase/supabase-js'
+import {
+  CommentaryMeta, ChunkRow,
+  BATCH_INSERT, sleep, flushBatch, rowsForChapter, loadedChapters, countRows,
+} from './commentary-lib'
 
-dotenv.config({ path: '.env.local' })
+const FETCH_SLEEP_MS = 50    // polite delay between HelloAO requests
 
-const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const API_BASE         = 'https://bible.helloao.org/api/c/matthew-henry'
-
-// Chunking parameters (token approximations using word count)
-const WORDS_PER_CHUNK  = 375   // ≈ 500 tokens
-const OVERLAP_WORDS    = 37    // ≈  50 tokens
-const STRIDE           = WORDS_PER_CHUNK - OVERLAP_WORDS  // 338
-
-const BATCH_INSERT     = 50    // rows per Supabase upsert call
-const FETCH_SLEEP_MS   = 50    // polite delay between HelloAO requests
-
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-
-function sleep(ms: number) {
-  return new Promise(r => setTimeout(r, ms))
+// Registry of HelloAO commentaries we ingest. apiId is the HelloAO path segment.
+const HELLOAO: Record<string, CommentaryMeta & { apiId: string }> = {
+  'matthew-henry':          { apiId: 'matthew-henry',          docTitle: 'Matthew Henry',          tradition: 'puritan'     },
+  'john-gill':              { apiId: 'john-gill',              docTitle: 'John Gill',              tradition: 'reformed'    },
+  'adam-clarke':            { apiId: 'adam-clarke',            docTitle: 'Adam Clarke',            tradition: 'arminian'    },
+  'jamieson-fausset-brown': { apiId: 'jamieson-fausset-brown', docTitle: 'Jamieson-Fausset-Brown', tradition: 'evangelical' },
 }
 
 interface BookEntry {
@@ -64,28 +47,9 @@ interface ChapterResponse {
   chapter: { number: number; content: ChapterContent[] }
 }
 
-// Split a text into overlapping word-window chunks.
-function chunkByWords(text: string): Array<{ text: string; tokenCount: number }> {
-  const words = text.split(/\s+/).filter(w => w.length > 0)
-  if (words.length === 0) return []
-
-  const result: Array<{ text: string; tokenCount: number }> = []
-  let start = 0
-
-  while (start < words.length) {
-    const end   = Math.min(start + WORDS_PER_CHUNK, words.length)
-    const chunk = words.slice(start, end).join(' ')
-    result.push({ text: chunk, tokenCount: end - start })
-    if (end === words.length) break
-    start += STRIDE
-  }
-
-  return result
-}
-
 // Pull the plain prose out of a chapter's verse objects.
-function extractText(data: ChapterResponse, bookName: string): string {
-  const header = `Matthew Henry's Commentary on ${bookName} ${data.chapter.number}:\n\n`
+function extractText(data: ChapterResponse, docTitle: string, bookName: string): string {
+  const header = `${docTitle}'s Commentary on ${bookName} ${data.chapter.number}:\n\n`
   const body = data.chapter.content
     .filter(item => item.type === 'verse' && Array.isArray(item.content))
     .map(item => (item.content ?? []).join(' '))
@@ -93,16 +57,15 @@ function extractText(data: ChapterResponse, bookName: string): string {
   return header + body
 }
 
-async function fetchBooks(): Promise<BookEntry[]> {
-  const res = await fetch(`${API_BASE}/books.json`)
+async function fetchBooks(apiBase: string): Promise<BookEntry[]> {
+  const res = await fetch(`${apiBase}/books.json`)
   if (!res.ok) throw new Error(`books.json fetch failed: ${res.status}`)
   const data = await res.json() as { books: BookEntry[] }
   return data.books
 }
 
-async function fetchChapter(bookId: string, chapter: number): Promise<ChapterResponse | null> {
-  const url = `${API_BASE}/${bookId}/${chapter}.json`
-  const res = await fetch(url)
+async function fetchChapter(apiBase: string, bookId: string, chapter: number): Promise<ChapterResponse | null> {
+  const res = await fetch(`${apiBase}/${bookId}/${chapter}.json`)
   if (!res.ok) return null
   try {
     return await res.json() as ChapterResponse
@@ -111,80 +74,64 @@ async function fetchChapter(bookId: string, chapter: number): Promise<ChapterRes
   }
 }
 
-async function flushBatch(batch: object[]) {
-  if (batch.length === 0) return
-  const { error } = await supabase
-    .from('chunks')
-    .upsert(batch, { onConflict: 'doc_title,book,chapter,chunk_index', ignoreDuplicates: false })
-  if (error) throw new Error(`Supabase upsert failed: ${error.message}`)
-}
-
 async function main() {
-  console.log('\nLoading Matthew Henry Commentary → chunks table')
-  console.log(`Chunk size: ${WORDS_PER_CHUNK} words (≈500 tokens) | Overlap: ${OVERLAP_WORDS} words (≈50 tokens)\n`)
-
-  const books = await fetchBooks()
-  console.log(`${books.length} books found\n`)
-
-  // Build a set of (book, chapter) pairs already loaded so we can skip them.
-  // limit(50000) overrides Supabase's default 1000-row cap; 1,167 chapters × avg ~14 chunks << 50k.
-  const { data: existing } = await supabase
-    .from('chunks')
-    .select('book, chapter')
-    .eq('doc_title', 'Matthew Henry')
-    .limit(50000)
-  const done = new Set((existing ?? []).map(r => `${r.book}:${r.chapter}`))
-  if (done.size > 0) {
-    console.log(`Checkpoint: ${done.size} (book, chapter) pairs already loaded — skipping.\n`)
+  const key = process.argv[2]
+  if (!key || !HELLOAO[key]) {
+    console.error(`Usage: npm run load-commentary -- <key>`)
+    console.error(`  key ∈ ${Object.keys(HELLOAO).join(' | ')}`)
+    process.exit(1)
   }
 
+  const meta    = HELLOAO[key]
+  const apiBase = `https://bible.helloao.org/api/c/${meta.apiId}`
+
+  console.log(`\nLoading ${meta.docTitle} (${meta.tradition}) → chunks table`)
+  console.log(`Source: ${apiBase}\n`)
+
+  const books = await fetchBooks(apiBase)
+  console.log(`${books.length} books found`)
+
+  const done = await loadedChapters(meta.docTitle)
+  if (done.size > 0) console.log(`Checkpoint: ${done.size} (book, chapter) pairs already loaded — skipping.`)
+  console.log('')
+
   let totalChunks = 0
-  const batch: object[] = []
+  const batch: ChunkRow[] = []
 
   for (const book of books) {
     process.stdout.write(`  ${book.name} (${book.numberOfChapters} ch)…`)
     let bookChunks = 0
 
     for (let ch = 1; ch <= book.numberOfChapters; ch++) {
-      const key = `${book.name}:${ch}`
-      if (done.has(key)) continue
+      if (done.has(`${book.name}:${ch}`)) continue
 
-      const data = await fetchChapter(book.id, ch)
+      const data = await fetchChapter(apiBase, book.id, ch)
       await sleep(FETCH_SLEEP_MS)
       if (!data) continue   // no commentary for this chapter
 
-      const rawText = extractText(data, book.name)
-      const chunks  = chunkByWords(rawText)
+      const rawText = extractText(data, meta.docTitle, book.name)
+      const rows    = rowsForChapter(meta, book.name, ch, rawText)
 
-      for (let i = 0; i < chunks.length; i++) {
-        batch.push({
-          source_type: 'commentary',
-          doc_title:   'Matthew Henry',
-          book:        book.name,
-          chapter:     ch,
-          chunk_index: i,
-          text:        chunks[i].text,
-          token_count: chunks[i].tokenCount,
-          // embedding left null — filled by embed-chunks.ts
-        })
-
+      for (const row of rows) {
+        batch.push(row)
         if (batch.length >= BATCH_INSERT) {
           await flushBatch(batch)
           batch.length = 0
         }
       }
 
-      bookChunks   += chunks.length
-      totalChunks  += chunks.length
+      bookChunks  += rows.length
+      totalChunks += rows.length
     }
 
     console.log(` ${bookChunks} chunks`)
   }
 
-  // Flush any remaining rows
   if (batch.length > 0) await flushBatch(batch)
 
-  console.log(`\nDone — ${totalChunks} chunks inserted/updated.`)
+  const total = await countRows(meta.docTitle)
+  console.log(`\nDone — ${totalChunks} chunks inserted/updated this run.`)
+  console.log(`Row count for ${meta.docTitle}: ${total}`)
   console.log('Next: npm run embed-chunks   (or: caffeinate -i npm run embed-chunks)')
 }
 

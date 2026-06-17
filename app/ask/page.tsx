@@ -9,7 +9,7 @@ export default function AskPage() {
           Ask any question. Answers are grounded only in retrieved verses — no hallucinated references.
         </p>
         <p className="text-xs text-stone-400">
-          Powered by semantic search over 31,000 verses + Matthew Henry&apos;s Commentary.
+          Powered by semantic search over 31,000 verses + commentary across traditions.
         </p>
       </div>
       <AskBox />

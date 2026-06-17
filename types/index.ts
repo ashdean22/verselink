@@ -20,6 +20,7 @@ export interface ChunkResult {
   id: number
   source_type: string
   doc_title: string
+  tradition: string
   book: string
   chapter: number
   chunk_index: number

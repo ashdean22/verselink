@@ -43,19 +43,32 @@ export async function searchVerses(query: string, k = 10): Promise<SearchResult[
   return (data ?? []) as SearchResult[]
 }
 
-export async function searchChunks(query: string, k = 5): Promise<ChunkResult[]> {
+// BALANCED COMMENTARY RETRIEVAL (key concept):
+//   We now have several commentaries spanning different traditions (Puritan,
+//   Reformed, Arminian, Evangelical, Catholic). Plain top-k would let the most
+//   verbose author dominate every result. match_chunks_balanced caps how many
+//   chunks come from any single tradition (perTradition), so the returned set
+//   spreads across viewpoints — and each chunk carries its tradition label.
+export async function searchChunks(query: string, k = 6, perTradition = 2): Promise<ChunkResult[]> {
   const queryVector = await embedQuery(query)
   const supabase = createServiceClient()
-  const { data, error } = await supabase.rpc('match_chunks', {
+  const { data, error } = await supabase.rpc('match_chunks_balanced', {
     query_embedding: queryVector,
     match_count: k,
+    per_tradition: perTradition,
   })
   if (error) throw new Error(`Chunk search failed: ${error.message}`)
   return (data ?? []) as ChunkResult[]
 }
 
 // Hybrid: embed once, search both tables in parallel, return combined results.
-export async function hybridSearch(query: string, verseK = 5, chunkK = 3): Promise<{
+// Commentary results are pulled balanced across traditions (see searchChunks).
+export async function hybridSearch(
+  query: string,
+  verseK = 5,
+  chunkK = 6,
+  perTradition = 2,
+): Promise<{
   verses: SearchResult[]
   chunks: ChunkResult[]
 }> {
@@ -64,7 +77,11 @@ export async function hybridSearch(query: string, verseK = 5, chunkK = 3): Promi
 
   const [verseRes, chunkRes] = await Promise.all([
     supabase.rpc('match_verses', { query_embedding: queryVector, match_count: verseK }),
-    supabase.rpc('match_chunks', { query_embedding: queryVector, match_count: chunkK }),
+    supabase.rpc('match_chunks_balanced', {
+      query_embedding: queryVector,
+      match_count: chunkK,
+      per_tradition: perTradition,
+    }),
   ])
 
   if (verseRes.error) throw new Error(`Verse search failed: ${verseRes.error.message}`)

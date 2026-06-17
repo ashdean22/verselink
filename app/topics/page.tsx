@@ -14,7 +14,7 @@ export default function TopicsPage() {
         <h1 className="text-3xl font-bold">Bible Topics</h1>
         <p className="text-stone-500">
           What does Scripture say about the things that matter most?
-          Each page is grounded in retrieved Bible verses and Matthew Henry's commentary.
+          Each page is grounded in retrieved Bible verses and commentary across traditions.
         </p>
       </div>
 

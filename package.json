@@ -11,6 +11,8 @@
     "embed-bible": "npx tsx scripts/embed-bible.ts",
     "run-eval": "npx tsx scripts/run-eval.ts",
     "load-commentary": "npx tsx scripts/load-commentary.ts",
+    "load-calvin": "npx tsx scripts/load-calvin.ts",
+    "load-haydock": "npx tsx scripts/load-haydock.ts",
     "embed-chunks": "npx tsx scripts/embed-chunks.ts",
     "load-translations": "npx tsx scripts/load-translations.ts"
   },

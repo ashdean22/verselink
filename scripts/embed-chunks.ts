@@ -69,7 +69,7 @@ async function main() {
     return
   }
 
-  console.log(`\nEmbedding ${totalNull} commentary chunks — Matthew Henry`)
+  console.log(`\nEmbedding ${totalNull} commentary chunks (all sources missing an embedding)`)
   console.log(`Model: gemini-embedding-001 | Dims: 768 | Sleep: ${SLEEP_MS}ms\n`)
 
   let totalDone   = 0
