@@ -19,11 +19,15 @@ const GEMINI_API_KEY   = process.env.GEMINI_API_KEY!
 const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const BATCH_FETCH              = 200
-const SLEEP_MS                 = 120
+const BATCH_FETCH              = 300
 const LOG_EVERY                = 100
 const MAX_RETRIES              = 5
-const CIRCUIT_BREAK_THRESHOLD  = 10
+// CONCURRENCY (key concept): the bottleneck is network round-trips to the Gemini
+// embedding API (~300-400ms each), not CPU. Running them one-at-a-time wastes that
+// wait. We fire CONCURRENCY requests in flight at once via a worker pool, which
+// cuts a 60k-chunk run from hours to ~30 min. Kept modest to stay under the
+// embedding RPM limit; embedWithRetry backs off on any 429s.
+const CONCURRENCY             = 12
 
 if (!GEMINI_API_KEY || !SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required env vars — check .env.local')
@@ -69,12 +73,13 @@ async function main() {
     return
   }
 
-  console.log(`\nEmbedding ${totalNull} commentary chunks (all sources missing an embedding)`)
-  console.log(`Model: gemini-embedding-001 | Dims: 768 | Sleep: ${SLEEP_MS}ms\n`)
+  const total = totalNull   // non-null after the guard above; stable inside closures
+
+  console.log(`\nEmbedding ${total} commentary chunks (all sources missing an embedding)`)
+  console.log(`Model: gemini-embedding-001 | Dims: 768 | Concurrency: ${CONCURRENCY}\n`)
 
   let totalDone   = 0
   let errors      = 0
-  let consecutive = 0
 
   // Fetch the next batch of un-embedded chunks, retrying transient network
   // failures (Supabase/undici can throw "TypeError: terminated" on a blip).
@@ -138,35 +143,31 @@ async function main() {
     // Bail after two such batches so a permanently-bad chunk can't hang the run.
     const doneBefore = totalDone
 
-    for (const chunk of chunks) {
-      const vector = await embedWithRetry(chunk.text)
-
-      if (!vector) {
-        errors++
-        consecutive++
-        process.stdout.write(`\n  [SKIP] chunk ${chunk.id} failed after ${MAX_RETRIES} retries`)
-
-        if (consecutive >= CIRCUIT_BREAK_THRESHOLD) {
-          console.log(`\n  Circuit breaker tripped. Pausing 2 min…`)
-          await sleep(2 * 60 * 1000)
-          consecutive = 0
+    // Worker pool: CONCURRENCY workers pull from a shared cursor over the batch,
+    // each embedding + writing one chunk at a time. No fixed sleep — throughput
+    // comes from parallelism, and embedWithRetry handles any rate-limit backoff.
+    const items = chunks   // non-null array; stable inside the worker closure
+    let cursor = 0
+    async function worker() {
+      while (cursor < items.length) {
+        const chunk = items[cursor++]
+        const vector = await embedWithRetry(chunk.text)
+        if (!vector) {
+          errors++
+          process.stdout.write(`\n  [SKIP] chunk ${chunk.id} failed after ${MAX_RETRIES} retries`)
+          continue
         }
-        continue
+        const wrote = await writeEmbedding(chunk.id, vector)
+        if (!wrote) { errors++; continue }
+
+        totalDone++
+        if (totalDone % LOG_EVERY === 0) {
+          const pct = Math.round((totalDone / total) * 100)
+          process.stdout.write(`\r  Embedded ${totalDone}/${total} (${pct}%) | skipped: ${errors}   `)
+        }
       }
-
-      consecutive = 0
-
-      const wrote = await writeEmbedding(chunk.id, vector)
-      if (!wrote) { errors++; continue }
-
-      totalDone++
-      if (totalDone % LOG_EVERY === 0) {
-        const pct = Math.round((totalDone / totalNull) * 100)
-        process.stdout.write(`\r  Embedded ${totalDone}/${totalNull} (${pct}%) | skipped: ${errors}   `)
-      }
-
-      await sleep(SLEEP_MS)
     }
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 
     if (totalDone === doneBefore) {
       stallBatches++
