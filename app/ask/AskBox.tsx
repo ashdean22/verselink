@@ -48,6 +48,10 @@ export default function AskBox() {
   const [error, setError]         = useState<string | null>(null)
   const [showContext, setShowContext] = useState(false)
   const [elapsed, setElapsed]     = useState<number | null>(null)
+  // Self-host answers arrive token-by-token over SSE. `streaming` is true while
+  // tokens are flowing; `streamAnswer` is the text accumulated so far.
+  const [streaming, setStreaming] = useState(false)
+  const [streamAnswer, setStreamAnswer] = useState('')
 
   // Re-translate displayed verse text whenever the version or result changes.
   // Retrieval stays on WEB; only the display layer swaps text here.
@@ -84,22 +88,87 @@ export default function AskBox() {
     setResult(null)
     setTranslated({})
     setElapsed(null)
+    setStreaming(false)
+    setStreamAnswer('')
 
     const start = Date.now()
     try {
-      const res  = await fetch('/api/ask', {
+      const res = await fetch('/api/ask', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ question: q }),
+        // Opt into streaming. The server streams only when the active backend is
+        // the self-host fine-tune; otherwise it replies with plain JSON.
+        body:    JSON.stringify({ question: q, stream: true }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Request failed')
-      setResult(data)
-      setElapsed(Date.now() - start)
+
+      const contentType = res.headers.get('content-type') ?? ''
+      if (contentType.includes('text/event-stream') && res.body) {
+        await consumeStream(res.body, start)
+      } else {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error ?? 'Request failed')
+        setResult(data)
+        setElapsed(Date.now() - start)
+      }
     } catch (err) {
       setError((err as Error).message)
     } finally {
       setLoading(false)
+      setStreaming(false)
+    }
+  }
+
+  // Parse the /api/ask SSE stream: `meta` (retrieved context up front),
+  // `token` (answer deltas), `done` (final answer + citations), `error`.
+  async function consumeStream(body: ReadableStream<Uint8Array>, start: number) {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let acc = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      // Events are separated by a blank line; process each complete frame.
+      let idx: number
+      while ((idx = buffer.indexOf('\n\n')) !== -1) {
+        const frame = buffer.slice(0, idx)
+        buffer = buffer.slice(idx + 2)
+
+        let event = 'message'
+        let dataStr = ''
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event:')) event = line.slice(6).trim()
+          else if (line.startsWith('data:')) dataStr += line.slice(5).trim()
+        }
+        if (!dataStr) continue
+        const data = JSON.parse(dataStr)
+
+        if (event === 'meta') {
+          // Retrieved context is available before generation finishes.
+          setResult({ answer: '', citations: [], retrievedVerses: data.retrievedVerses ?? [], retrievedChunks: data.retrievedChunks ?? [] })
+          setLoading(false)
+          setStreaming(true)
+        } else if (event === 'token') {
+          acc += data.text ?? ''
+          setStreamAnswer(acc)
+        } else if (event === 'done') {
+          setResult(prev => ({
+            answer:          data.answer ?? acc,
+            citations:       data.citations ?? [],
+            retrievedVerses: prev?.retrievedVerses ?? [],
+            retrievedChunks: prev?.retrievedChunks ?? [],
+            inputTokens:     data.inputTokens,
+            outputTokens:    data.outputTokens,
+          }))
+          setStreaming(false)
+          setElapsed(Date.now() - start)
+        } else if (event === 'error') {
+          throw new Error(data.error ?? 'generation failed')
+        }
+      }
     }
   }
 
@@ -184,11 +253,18 @@ export default function AskBox() {
           <div className="rounded-lg border border-stone-200 bg-white p-5 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-stone-400 uppercase tracking-wide">Answer</p>
-              {elapsed && (
+              {streaming ? (
+                <span className="text-xs text-stone-400 animate-pulse">streaming…</span>
+              ) : elapsed ? (
                 <span className="text-xs text-stone-400">{(elapsed / 1000).toFixed(1)}s</span>
-              )}
+              ) : null}
             </div>
-            <p className="text-stone-800 leading-relaxed">{result.answer}</p>
+            <p className="text-stone-800 leading-relaxed whitespace-pre-wrap">
+              {streaming ? streamAnswer : result.answer}
+              {streaming && (
+                <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-stone-400 animate-pulse" />
+              )}
+            </p>
           </div>
 
           {/* Citations */}

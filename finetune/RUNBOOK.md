@@ -285,6 +285,55 @@ EOF
 
 ---
 
+## Step 8 — Serve the model with streaming (`serve.py`)
+
+`finetune/serve.py` is an OpenAI-compatible inference server with **SSE token
+streaming**. It exposes `POST /v1/chat/completions` (and `GET /health`), which
+is exactly what the VerseLink `/api/ask` route talks to.
+
+```bash
+source finetune/.venv/bin/activate
+
+# Require a bearer token (recommended if the box is internet-reachable):
+SELFHOST_API_KEY=some-long-random-secret python finetune/serve.py
+```
+
+It loads the LoRA from `finetune/output/verselink-lora` by default; override with
+`SELFHOST_MODEL_DIR` (e.g. point at `verselink-gemma-merged`). Bind host/port via
+`HOST`/`PORT` (defaults `0.0.0.0:8000`).
+
+### Smoke-test streaming
+
+```bash
+# Non-streaming (one JSON blob):
+curl -s http://localhost:8000/v1/chat/completions \
+  -H 'Authorization: Bearer some-long-random-secret' \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"What does Scripture say about anxiety?"}]}'
+
+# Streaming (watch tokens arrive as `data:` lines, ending with data: [DONE]):
+curl -N http://localhost:8000/v1/chat/completions \
+  -H 'Authorization: Bearer some-long-random-secret' \
+  -H 'Content-Type: application/json' \
+  -d '{"stream":true,"messages":[{"role":"user","content":"What does Scripture say about anxiety?"}]}'
+```
+
+### Point the app at it
+
+In `.env.local` (see `env.example`):
+
+```bash
+GENERATION_MODEL=selfhost:verselink-gemma
+SELFHOST_URL=http://YOUR-GPU-BOX:8000/v1/chat/completions
+SELFHOST_API_KEY=some-long-random-secret
+```
+
+With those set, the `/ask` page renders the answer **token-by-token** as the
+fine-tune generates it (the route forwards the stream as SSE). If the self-host
+call fails, `/api/ask` falls back to Claude and returns the answer as one chunk.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |

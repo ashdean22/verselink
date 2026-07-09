@@ -53,6 +53,10 @@ export interface RetrievedChunk {
 export async function POST(req: NextRequest) {
   let question: string
   let includeUsage = false
+  // When true, and the active backend is the self-host fine-tune, we return an
+  // SSE token stream instead of one JSON blob. The UI opts in; the benchmark
+  // (which reads res.json()) does not, so it keeps getting plain JSON.
+  let wantStream = false
   // Default model is controlled by the GENERATION_MODEL env var (the feature
   // flag). A per-request `model` still overrides it (used by the benchmark).
   let generationModel = process.env.GENERATION_MODEL || 'claude-sonnet-4-6'
@@ -60,6 +64,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     question = body.question?.trim()
     includeUsage = body.includeUsage === true
+    wantStream = body.stream === true
     if (body.model) generationModel = body.model
     if (!question) return NextResponse.json({ error: 'question is required' }, { status: 400 })
   } catch {
@@ -86,6 +91,22 @@ export async function POST(req: NextRequest) {
   // Shared builder (lib/rag.ts): core-doctrines guardrail + tradition-labelled
   // commentary + side-by-side instruction. Same prompt for every backend below.
   const systemPrompt = buildSystemPrompt(verses, chunks)
+
+  // Retrieved-context payload for the response. Known the moment retrieval
+  // finishes, so the streaming path can emit it up front (the `meta` event)
+  // while tokens are still being generated. Full commentary text, always.
+  const retrievedVerses: RetrievedVerse[] = verses.map(v => ({
+    ref:        `${v.book} ${v.chapter}:${v.verse}`,
+    text:       v.text,
+    similarity: v.similarity,
+  }))
+  const retrievedChunks: RetrievedChunk[] = chunks.map(c => ({
+    ref:        chunkRef(c),
+    text:       c.text,
+    similarity: c.similarity,
+    source:     c.doc_title,
+    tradition:  traditionLabel(c.tradition),
+  }))
 
   // ── Step 3: GENERATE ─────────────────────────────────────────────────────────
   let parsed: { answer: string; citations: Citation[] }
@@ -178,19 +199,37 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Cap each commentary excerpt to ~150 words for the prompt only. Full text is
+  // still kept for the UI citation cards (built from the untouched `chunks`).
+  function truncateWords(text: string, maxWords: number): string {
+    const words = text.split(/\s+/)
+    return words.length <= maxWords ? text : words.slice(0, maxWords).join(' ') + '…'
+  }
+
+  // Self-host prompt: same grounding rules, but commentary excerpts truncated to
+  // ~150 words. Shared by the streaming and non-streaming self-host paths.
+  function buildSelfHostPrompt(): string {
+    const truncatedChunks = chunks.map(c => ({ ...c, text: truncateWords(c.text, 150) }))
+    return buildSystemPrompt(verses, truncatedChunks)
+  }
+
   // Self-hosted fine-tune: plain text completion. Gemma 2 has no system role,
   // so the prompt is folded into a single user turn (matches the eval format).
   async function callSelfHostPlain(endpoint: string, apiKey: string, modelId: string) {
+    const selfHostPrompt = buildSelfHostPrompt()
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 55000)
+    // Answers are 2-4 sentences plus citations, so 400 tokens is plenty; the
+    // old 1024 cap only let slow runs generate more than we ever surface.
+    const startedAt = Date.now()
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
           model:      modelId,
-          max_tokens: 1024,
-          messages:   [{ role: 'user', content: `${systemPrompt}\n\nQuestion: ${question}` }],
+          max_tokens: 400,
+          messages:   [{ role: 'user', content: `${selfHostPrompt}\n\nQuestion: ${question}` }],
         }),
         signal: controller.signal,
       })
@@ -198,11 +237,15 @@ export async function POST(req: NextRequest) {
       const data = await res.json()
       const content: string = data.choices?.[0]?.message?.content
       if (!content) throw new Error('no content in self-host response')
+      console.log(`[selfhost] generation took ${Date.now() - startedAt}ms (model=${modelId})`)
       return {
         parsed:       { answer: content.trim(), citations: buildCitations(content) },
         inputTokens:  0,
         outputTokens: 0,
       }
+    } catch (err) {
+      console.log(`[selfhost] generation failed after ${Date.now() - startedAt}ms (model=${modelId})`)
+      throw err
     } finally {
       clearTimeout(timer)
     }
@@ -226,6 +269,108 @@ export async function POST(req: NextRequest) {
       inputTokens:  message.usage.input_tokens,
       outputTokens: message.usage.output_tokens,
     }
+  }
+
+  // ── Streaming (self-host only) ─────────────────────────────────────────────
+  // We forward the fine-tune's OpenAI-style SSE to the browser as our own named
+  // events: `meta` (retrieved context, sent first), `token` (answer deltas),
+  // `done` (final answer + citations), `error`. The UI reuses one parser.
+  const encoder = new TextEncoder()
+  const sse = (event: string, data: unknown) =>
+    encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+
+  // Call serve.py with stream:true, parse its SSE, forward each content delta as
+  // a `token` event, and return the accumulated answer. Throws if nothing came
+  // back (empty stream) so the caller can fall back to Claude.
+  async function pipeSelfHostTokens(
+    modelId: string,
+    send: (event: string, data: unknown) => void,
+  ): Promise<string> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 55000)
+    try {
+      const res = await fetch(process.env.SELFHOST_URL!, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SELFHOST_API_KEY!}` },
+        body: JSON.stringify({
+          model:      modelId,
+          max_tokens: 400,
+          stream:     true,
+          messages:   [{ role: 'user', content: `${buildSelfHostPrompt()}\n\nQuestion: ${question}` }],
+        }),
+        signal: controller.signal,
+      })
+      if (!res.ok || !res.body) throw new Error(`selfhost ${res.status}: ${await res.text().catch(() => '')}`)
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let answer = ''
+      // SSE frames are separated by a blank line; parse whole frames as they arrive.
+      outer: while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        let idx: number
+        while ((idx = buffer.indexOf('\n\n')) !== -1) {
+          const frame = buffer.slice(0, idx)
+          buffer = buffer.slice(idx + 2)
+          for (const line of frame.split('\n')) {
+            if (!line.startsWith('data:')) continue
+            const payload = line.slice(5).trim()
+            if (payload === '[DONE]') break outer
+            try {
+              const delta = JSON.parse(payload).choices?.[0]?.delta?.content
+              if (delta) { answer += delta; send('token', { text: delta }) }
+            } catch { /* ignore keep-alives / non-JSON lines */ }
+          }
+        }
+      }
+      if (!answer.trim()) throw new Error('no content in self-host stream')
+      return answer
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  function streamSelfHost(modelId: string): Response {
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (event: string, data: unknown) => controller.enqueue(sse(event, data))
+        // Retrieved context is known immediately — send it before the first token.
+        send('meta', { retrievedVerses, retrievedChunks })
+        const startedAt = Date.now()
+        try {
+          const answer = await pipeSelfHostTokens(modelId, send)
+          console.log(`[selfhost] streamed generation took ${Date.now() - startedAt}ms (model=${modelId})`)
+          send('done', { answer: answer.trim(), citations: buildCitations(answer), inputTokens: 0, outputTokens: 0 })
+        } catch (err) {
+          console.error(`[selfhost] stream failed after ${Date.now() - startedAt}ms — falling back to Claude:`, err)
+          try {
+            // Claude tool-use isn't token-streamed; surface its answer as one chunk.
+            const { parsed, inputTokens, outputTokens } = await generateWithClaude('claude-sonnet-4-6')
+            send('token', { text: parsed.answer })
+            send('done', { answer: parsed.answer, citations: parsed.citations, inputTokens, outputTokens })
+          } catch (fallbackErr) {
+            console.error('Claude fallback failed:', fallbackErr)
+            send('error', { error: 'generation failed' })
+          }
+        } finally {
+          controller.close()
+        }
+      },
+    })
+    return new Response(stream, {
+      headers: {
+        'Content-Type':  'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection':    'keep-alive',
+      },
+    })
+  }
+
+  if (wantStream && generationModel.startsWith('selfhost:')) {
+    return streamSelfHost(generationModel.slice('selfhost:'.length))
   }
 
   try {
@@ -277,18 +422,8 @@ export async function POST(req: NextRequest) {
   const response: AskResponse = {
     answer:    parsed.answer ?? '',
     citations: parsed.citations ?? [],
-    retrievedVerses: verses.map(v => ({
-      ref:        `${v.book} ${v.chapter}:${v.verse}`,
-      text:       v.text,
-      similarity: v.similarity,
-    })),
-    retrievedChunks: chunks.map(c => ({
-      ref:        chunkRef(c),
-      text:       c.text,
-      similarity: c.similarity,
-      source:     c.doc_title,
-      tradition:  traditionLabel(c.tradition),
-    })),
+    retrievedVerses,
+    retrievedChunks,
   }
 
   if (includeUsage) {
